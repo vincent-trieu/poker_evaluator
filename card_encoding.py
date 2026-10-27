@@ -59,3 +59,16 @@ class Card:
     
     def __repr__(self) -> str:
         return f"Card({self.rank}, {self.suit}) # {self}"
+
+def standard_deck() -> list[Card]:
+    """Return a list of all 52 standard cards."""
+    ranks = list(range(2, 15))
+    suits = [Card.CLUBS, Card.DIAMONDS, Card.HEARTS, Card.SPADES]
+    return [Card(r, s) for r in ranks for s in suits]
+
+
+def short_deck() -> list[Card]:
+    """Return a short deck (no twos, three, fours, or fives)."""
+    ranks = list(range(6, 15))
+    suits = [Card.CLUBS, Card.DIAMONDS, Card.HEARTS, Card.SPADES]
+    return [Card(r, s) for r in ranks for s in suits]
