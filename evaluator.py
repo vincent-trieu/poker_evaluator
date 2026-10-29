@@ -23,6 +23,8 @@ def hand_rank_code(hand_type: int, card_ranks: tuple[int, ...], size: int):
     This means that we can compare hands simply by seeing which number is larger. For variants like Badugi
     where not every card in the hand is counted, the "smaller" hands have fewer digits and therefore lose
     to "bigger" hands.
+
+    A larger number beats a smaller number.
     """
     code = hand_type
     for i in range(size):
