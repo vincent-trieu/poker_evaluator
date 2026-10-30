@@ -8,6 +8,9 @@ This allows a level of flexibility that allows the evaluator to work with games
 like Badugi, which don't use the standard 5-card hand rankings.
 """
 
+from itertools import combinations
+from typing import Callable
+
 def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
     """
     Function that returns an encoding of a hand and its ranking, as a comparable int.
@@ -60,6 +63,19 @@ def straight_high(
                 best = high
     return best
 
+def best_of_subsets(
+    pool: Tuple[Card, ...],
+    size_of_subsets: int,
+    ranking_func: Callable[[Tuple[Card, ...]], int],
+) -> int:
+    """Maximum rank code over all size-k subsets of the pool."""
+    best = None
+    for subset in combinations(pool, size_of_subsets):
+        code = ranking_func(subset)
+        if best is None or code > best:
+            best = code
+    return best
+
 _WHEEL = (14, 5, 4, 3, 2)
 _STANDARD_SEQS = tuple(tuple(range(low, low + 5)) for low in range(2, 11)) + (_WHEEL,)
 
@@ -95,3 +111,7 @@ def standard_ranking(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     if shape == (1, 1, 1, 1, 1):
         return hand_rank_code(0, group_ranks, 5)
     raise AssertionError(f"unreachable shape {shape}")
+
+def evaluate_standard(pool: Tuple[Card, ...]) -> int:
+    """Best 5-card hand from a pool (Hold'em, stud, Omaha, etc.)."""
+    return best_of_subsets(pool, 5, standard_ranking)
