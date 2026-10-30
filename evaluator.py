@@ -162,3 +162,34 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
 def evaluate_short_deck(pool: tuple[Card, ...]) -> int:
     """Best 5-card hand from a pool (short deck)."""
     return best_of_subsets(pool, 5, ranking_short_deck)
+
+# Ace to Five low
+
+def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card]) -> int:
+    """Rank a 5-card set under Ace to Five low rules."""
+    if len(cards) != 5:
+        raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
+
+    counts = rank_counts(cards)
+    groups = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    shape = tuple(cnt for _, cnt in groups)
+    # Aces are low - invert all other cards
+    group_ranks = [(14 if rank == 14 else (14 - rank)) for rank, _ in groups]
+
+    if shape == (4, 1):
+        return hand_rank_code(0, group_ranks, 5)
+    if shape == (3, 2):
+        return hand_rank_code(1, group_ranks, 5)
+    if shape == (3, 1, 1):
+        return hand_rank_code(2, group_ranks, 5)
+    if shape == (2, 2, 1):
+        return hand_rank_code(3, group_ranks, 5)
+    if shape == (2, 1, 1, 1):
+        return hand_rank_code(4, group_ranks, 5)
+    if shape == (1, 1, 1, 1, 1):
+        return hand_rank_code(5, group_ranks, 5)
+    raise AssertionError(f"unreachable shape {shape}")
+
+def evaluate_ace_to_five_low(pool: tuple[Card, ...]) -> int:
+    """Best ('worst') 5-card hand from a pool (Ace to Five low)."""
+    return best_of_subsets(pool, 5, ranking_ace_to_five_low)
