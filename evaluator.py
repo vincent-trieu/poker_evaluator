@@ -35,6 +35,8 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
         code = (code << 4) + (card_ranks[i] if i < len(card_ranks) else 0)
     return code
 
+# Generic helpers
+
 def rank_counts(cards) -> dict:
     """Takes a sequence of cards and returns a dict of the number seen of each rank."""
     counts: dict = {}
@@ -64,7 +66,7 @@ def straight_high(
     return best
 
 def best_of_subsets(
-    pool: Tuple[Card, ...],
+    pool: tuple[Card, ...],
     size_of_subsets: int,
     ranking_func: Callable[[Tuple[Card, ...]], int],
 ) -> int:
@@ -76,10 +78,12 @@ def best_of_subsets(
             best = code
     return best
 
-_WHEEL = (14, 5, 4, 3, 2)
-_STANDARD_SEQS = tuple(tuple(range(low, low + 5)) for low in range(2, 11)) + (_WHEEL,)
+# Standard poker
 
-def standard_ranking(cards: tuple[Card, Card, Card, Card, Card]) -> int:
+_WHEEL_STANDARD = (14, 5, 4, 3, 2)
+_STRAIGHT_SEQS_STANDARD = tuple(tuple(range(low, low + 5)) for low in range(2, 11)) + (_WHEEL_STANDARD,)
+
+def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under the usual rules."""
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
@@ -90,7 +94,7 @@ def standard_ranking(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     group_ranks = [rank for rank, _ in groups]
 
     flush = is_flush(cards)
-    str_high = straight_high(cards, _STANDARD_SEQS)
+    str_high = straight_high(cards, _STRAIGHT_SEQS_STANDARD)
 
     if flush and str_high is not None:
         return hand_rank_code(8, [str_high], 5)
@@ -112,6 +116,49 @@ def standard_ranking(cards: tuple[Card, Card, Card, Card, Card]) -> int:
         return hand_rank_code(0, group_ranks, 5)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_standard(pool: Tuple[Card, ...]) -> int:
+def evaluate_standard(pool: tuple[Card, ...]) -> int:
     """Best 5-card hand from a pool (Hold'em, stud, Omaha, etc.)."""
-    return best_of_subsets(pool, 5, standard_ranking)
+    return best_of_subsets(pool, 5, ranking_standard)
+
+# Short deck poker
+
+_WHEEL_SHORT_DECK = (14, 9, 8, 7, 6)
+_STRAIGHT_SEQS_SHORT_DECK = tuple(tuple(range(low, low + 5)) for low in range(6, 11)) + (_WHEEL_SHORT_DECK,)
+
+def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
+    """Rank a 5-card set under short deck rules."""
+    if len(cards) != 5:
+        raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
+
+    counts = rank_counts(cards)
+    groups = sorted(counts.items(), key=lambda kv: (-kv[1], -kv[0]))
+    shape = tuple(cnt for _, cnt in groups)
+    group_ranks = [rank for rank, _ in groups]
+
+    flush = is_flush(cards)
+    str_high = straight_high(cards, _STRAIGHT_SEQS_SHORT_DECK)
+
+    if flush and str_high is not None:
+        return hand_rank_code(8, [str_high], 5)
+    if shape == (4, 1):
+        return hand_rank_code(7, group_ranks, 5)
+    # Flushes are better than full houses in short deck
+    if flush:
+        return hand_rank_code(6, sorted((c.rank for c in cards), reverse=True), 5)
+    if shape == (3, 2):
+        return hand_rank_code(5, group_ranks, 5)
+    if str_high is not None:
+        return hand_rank_code(4, [str_high], 5)
+    if shape == (3, 1, 1):
+        return hand_rank_code(3, group_ranks, 5)
+    if shape == (2, 2, 1):
+        return hand_rank_code(2, group_ranks, 5)
+    if shape == (2, 1, 1, 1):
+        return hand_rank_code(1, group_ranks, 5)
+    if shape == (1, 1, 1, 1, 1):
+        return hand_rank_code(0, group_ranks, 5)
+    raise AssertionError(f"unreachable shape {shape}")
+
+def evaluate_short_deck(pool: tuple[Card, ...]) -> int:
+    """Best 5-card hand from a pool (short deck)."""
+    return best_of_subsets(pool, 5, ranking_short_deck)
