@@ -46,12 +46,8 @@ class Card:
         if rank_char not in cls.RANK_MAP or suit_char not in cls.SUIT_MAP:
             raise ValueError(f"Invalid card: {s!r}")
         
-        try:
-            rank = cls.RANK_MAP[rank_char]
-            suit = cls.SUIT_MAP[suit_char]
-        except KeyError as e:
-            raise ValueError(f"Invalid card character in {s!r}: {e}")
-
+        rank = cls.RANK_MAP[rank_char]
+        suit = cls.SUIT_MAP[suit_char]
         return cls(rank, suit)
     
     def __post_init__(self):
