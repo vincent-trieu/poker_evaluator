@@ -49,7 +49,7 @@ def is_flush(cards: tuple[Card, Card, Card, Card, Card]) -> bool:
     return len({c.suit for c in cards}) == 1
 
 def straight_high(
-    cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, int, int, int, int], ...]
+    cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, tuple[int, int, int, int, int]], ...]
 ) -> int | None:
     """High card of the straight, or None."""
     if len(cards) != 5:
@@ -59,8 +59,8 @@ def straight_high(
         return None
     best = None
     for seq in sequences:
-        if set(seq) == rank_set:
-            high = max(seq)
+        if set(seq[1]) == rank_set:
+            high = seq[0]
             if best is None or high > best:
                 best = high
     return best
@@ -80,8 +80,8 @@ def best_of_subsets(
 
 # Standard poker
 
-_WHEEL_STANDARD = (14, 5, 4, 3, 2)
-_STRAIGHT_SEQS_STANDARD = tuple(tuple(range(low, low + 5)) for low in range(2, 11)) + (_WHEEL_STANDARD,)
+_WHEEL_STANDARD = (5, (14, 5, 4, 3, 2))
+_STRAIGHT_SEQS_STANDARD = tuple((low + 5, tuple(range(low, low + 5))) for low in range(2, 11)) + (_WHEEL_STANDARD,)
 
 def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under the usual rules."""
@@ -122,8 +122,8 @@ def evaluate_standard(pool: tuple[Card, ...]) -> int:
 
 # Short deck poker
 
-_WHEEL_SHORT_DECK = (14, 9, 8, 7, 6)
-_STRAIGHT_SEQS_SHORT_DECK = tuple(tuple(range(low, low + 5)) for low in range(6, 11)) + (_WHEEL_SHORT_DECK,)
+_WHEEL_SHORT_DECK = (9, (14, 9, 8, 7, 6))
+_STRAIGHT_SEQS_SHORT_DECK = tuple((low + 5, tuple(range(low, low + 5))) for low in range(6, 11)) + (_WHEEL_SHORT_DECK,)
 
 def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under short deck rules."""
