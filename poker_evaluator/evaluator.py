@@ -49,9 +49,13 @@ def is_flush(cards: tuple[Card, Card, Card, Card, Card]) -> bool:
     return len({c.suit for c in cards}) == 1
 
 def straight_high(
-    cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, tuple[int, int, int, int, int]], ...]
+    cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, frozenset[int, int, int, int, int]], ...]
 ) -> int | None:
-    """High card of the straight, or None."""
+    """
+    High card of the straight, or None.
+    
+    Assumes the sequences are in order from best to worst.
+    """
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
     rank_set = {c.rank for c in cards}
@@ -59,10 +63,8 @@ def straight_high(
         return None
     best = None
     for seq in sequences:
-        if set(seq[1]) == rank_set:
-            high = seq[0]
-            if best is None or high > best:
-                best = high
+        if seq[1] == rank_set:
+            return seq[0]
     return best
 
 def best_of_subsets(
@@ -84,8 +86,8 @@ def best_of_subsets(
 
 # Standard poker
 
-_WHEEL_STANDARD = (5, (14, 5, 4, 3, 2))
-_STRAIGHT_SEQS_STANDARD = tuple((low + 4, tuple(range(low, low + 5))) for low in range(2, 11)) + (_WHEEL_STANDARD,)
+_WHEEL_STANDARD = (5, frozenset((14, 5, 4, 3, 2)))
+_STRAIGHT_SEQS_STANDARD = (_WHEEL_STANDARD,) + tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1))
 
 def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under the usual rules."""
@@ -126,8 +128,8 @@ def evaluate_standard(pool: tuple[Card, ...]) -> int:
 
 # Short deck poker
 
-_WHEEL_SHORT_DECK = (9, (14, 9, 8, 7, 6))
-_STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, tuple(range(low, low + 5))) for low in range(6, 11)) + (_WHEEL_SHORT_DECK,)
+_WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
+_STRAIGHT_SEQS_SHORT_DECK = (_WHEEL_SHORT_DECK,) + tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1))
 
 def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under short deck rules."""
