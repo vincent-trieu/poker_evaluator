@@ -91,7 +91,7 @@ def best_of_subsets(
 # Standard poker
 
 _WHEEL_STANDARD = (5, frozenset((14, 5, 4, 3, 2)))
-_STRAIGHT_SEQS_STANDARD = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1)) + _WHEEL_STANDARD
+_STRAIGHT_SEQS_STANDARD = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1)) + (_WHEEL_STANDARD,)
 
 def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under the usual rules."""
@@ -103,19 +103,10 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     shape = tuple(cnt for _, cnt in groups)
     group_ranks = [rank for rank, _ in groups]
 
-    flush = is_flush(cards)
-    str_high = straight_high(cards, _STRAIGHT_SEQS_STANDARD)
-
-    if flush and str_high is not None:
-        return hand_rank_code(8, [str_high], 5)
     if shape == (4, 1):
         return hand_rank_code(7, group_ranks, 5)
     if shape == (3, 2):
         return hand_rank_code(6, group_ranks, 5)
-    if flush:
-        return hand_rank_code(5, sorted((c.rank for c in cards), reverse=True), 5)
-    if str_high is not None:
-        return hand_rank_code(4, [str_high], 5)
     if shape == (3, 1, 1):
         return hand_rank_code(3, group_ranks, 5)
     if shape == (2, 2, 1):
@@ -123,6 +114,16 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     if shape == (2, 1, 1, 1):
         return hand_rank_code(1, group_ranks, 5)
     if shape == (1, 1, 1, 1, 1):
+        # Flushes and straights only possible with this shape
+        flush = is_flush(cards)
+        str_high = straight_high(cards, _STRAIGHT_SEQS_STANDARD)
+
+        if flush and str_high is not None:
+            return hand_rank_code(8, [str_high], 5)
+        if flush:
+            return hand_rank_code(5, sorted((c.rank for c in cards), reverse=True), 5)
+        if str_high is not None:
+            return hand_rank_code(4, [str_high], 5)
         return hand_rank_code(0, group_ranks, 5)
     raise AssertionError(f"unreachable shape {shape}")
 
@@ -133,7 +134,7 @@ def evaluate_standard(pool: tuple[Card, ...]) -> int:
 # Short deck poker
 
 _WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
-_STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1)) + _WHEEL_SHORT_DECK
+_STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1))  + (_WHEEL_SHORT_DECK,)
 
 def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under short deck rules."""
@@ -145,20 +146,10 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     shape = tuple(cnt for _, cnt in groups)
     group_ranks = [rank for rank, _ in groups]
 
-    flush = is_flush(cards)
-    str_high = straight_high(cards, _STRAIGHT_SEQS_SHORT_DECK)
-
-    if flush and str_high is not None:
-        return hand_rank_code(8, [str_high], 5)
     if shape == (4, 1):
         return hand_rank_code(7, group_ranks, 5)
-    # Flushes are better than full houses in short deck
-    if flush:
-        return hand_rank_code(6, sorted((c.rank for c in cards), reverse=True), 5)
     if shape == (3, 2):
         return hand_rank_code(5, group_ranks, 5)
-    if str_high is not None:
-        return hand_rank_code(4, [str_high], 5)
     if shape == (3, 1, 1):
         return hand_rank_code(3, group_ranks, 5)
     if shape == (2, 2, 1):
@@ -166,6 +157,16 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     if shape == (2, 1, 1, 1):
         return hand_rank_code(1, group_ranks, 5)
     if shape == (1, 1, 1, 1, 1):
+        flush = is_flush(cards)
+        str_high = straight_high(cards, _STRAIGHT_SEQS_SHORT_DECK)
+
+        if flush and str_high is not None:
+            return hand_rank_code(8, [str_high], 5)
+        # Flushes are better than full houses in short deck
+        if flush:
+            return hand_rank_code(6, sorted((c.rank for c in cards), reverse=True), 5)
+        if str_high is not None:
+            return hand_rank_code(4, [str_high], 5)
         return hand_rank_code(0, group_ranks, 5)
     raise AssertionError(f"unreachable shape {shape}")
 
