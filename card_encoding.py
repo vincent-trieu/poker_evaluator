@@ -37,7 +37,7 @@ class Card:
         """
         Parse a card string in standard poker notation.
         
-        Examples: "Ah", "Ts", "2d", "Kc", "as", "TD"
+        Examples: "Ah", "Ts", "2d", "Kc", "TD"
         """
         if len(s) != 2:
             raise ValueError(f"Invalid card string: {s!r} (expected 2 chars)")
