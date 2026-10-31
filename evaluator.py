@@ -68,7 +68,7 @@ def straight_high(
 def best_of_subsets(
     pool: tuple[Card, ...],
     size_of_subsets: int,
-    ranking_func: Callable[[Tuple[Card, ...]], int],
+    ranking_func: Callable[[tuple[Card, ...]], int],
 ) -> int:
     """Maximum rank code over all size-k subsets of the pool."""
     best = None
@@ -171,7 +171,7 @@ def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card]) -> int:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
 
     counts = rank_counts(cards)
-    groups = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    groups = sorted(counts.items(), key=lambda kv: (-kv[1], -kv[0]))
     shape = tuple(cnt for _, cnt in groups)
     # Aces are low - invert all other cards
     group_ranks = [(14 if rank == 14 else (14 - rank)) for rank, _ in groups]
