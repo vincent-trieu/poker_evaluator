@@ -78,7 +78,7 @@ def best_of_subsets(
         code = ranking_func(subset)
         if best is None or code > best:
             best = code
-    if best == None:
+    if best is None:
         raise ValueError(f"Cards have no subset valid as a hand: {cards!r}")
     return best
 
@@ -223,7 +223,7 @@ def evaluate_badugi(hand: tuple[Card, Card, Card, Card]) -> int:
             if not legal_badugi(subset):
                 continue
             code = ranking_badugi(subset)
-            if best == None or code > best:
+            if best is None or code > best:
                 best = code
         if best is not None:
             return best
