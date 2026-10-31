@@ -193,3 +193,34 @@ def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card]) -> int:
 def evaluate_ace_to_five_low(pool: tuple[Card, ...]) -> int:
     """Best ('worst') 5-card hand from a pool (Ace to Five low)."""
     return best_of_subsets(pool, 5, ranking_ace_to_five_low)
+
+# Badugi
+
+def legal_badugi(cards: tuple[Card, ...]) -> bool:
+    """Checks if a Badugi hand is legal (has no matching card ranks or suits)."""
+    suits = [c.suit for c in cards]
+    ranks = [c.rank for c in cards]
+    return len(set(suits)) == len(suits) and len(set(ranks)) == len(ranks)
+
+def ranking_badugi(cards: tuple[Card, ...]) -> int:
+    """Ranks a hand based on Badugi rules. Assumes it's a legal hand, otherwise the code is nonsense."""
+    ranks = sorted((14 if card.rank == 14 else (14 - card.rank) for card in cards))
+    return hand_rank_code(0, ranks, len(cards))
+
+def evaluate_badugi(hand: tuple[Card, Card, Card, Card]) -> int:
+    """
+    Badugi evaluation of four cards.
+
+    Tries size 4 first (a full Badugi), then 3, 2, 1. More cards beats fewer.
+    """
+    for size in (4, 3, 2, 1):
+        best = None
+        for subset in combinations(hand, size):
+            if not legal_badugi(subset):
+                continue
+            code = ranking_badugi(subset)
+            if best == None or code > best:
+                best = code
+        if best is not None:
+            return best
+    raise AssertionError(f"no subset is legal in hand {hand!r}")
