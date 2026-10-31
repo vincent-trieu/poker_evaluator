@@ -71,11 +71,15 @@ def best_of_subsets(
     ranking_func: Callable[[tuple[Card, ...]], int],
 ) -> int:
     """Maximum rank code over all size-k subsets of the pool."""
+    if len(pool) < size_of_subsets:
+        raise ValueError(f"Invalid size: {cards!r} (expected at least {size_of_subsets} cards)")
     best = None
     for subset in combinations(pool, size_of_subsets):
         code = ranking_func(subset)
         if best is None or code > best:
             best = code
+    if best == None:
+        raise ValueError(f"Cards have no subset valid as a hand: {cards!r}")
     return best
 
 # Standard poker
