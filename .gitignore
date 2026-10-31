@@ -2,4 +2,7 @@ tester.py
 __pycache__
 poker_evaluator.egg-info/
 .venv
+
 .pytest_cache
+.benchmarks
+.hypothesis
