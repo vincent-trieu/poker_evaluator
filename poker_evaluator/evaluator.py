@@ -46,7 +46,11 @@ def rank_counts(cards) -> dict:
 
 def is_flush(cards: tuple[Card, Card, Card, Card, Card]) -> bool:
     """Checks if the cards are all the same suit."""
-    return len({c.suit for c in cards}) == 1
+    suit_to_check = cards[0].suit
+    for card in cards[1:5]:
+        if card.suit != suit_to_check:
+            return False
+    return True
 
 def straight_high(
     cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, frozenset[int, int, int, int, int]], ...]
