@@ -1,5 +1,5 @@
 """
-poker_evaluator/card.py
+poker_evaluator/card_encoding.py
 
 Cards are represented as a tuple of integers.
 

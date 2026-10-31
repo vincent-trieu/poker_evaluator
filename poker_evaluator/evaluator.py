@@ -91,7 +91,7 @@ def best_of_subsets(
 # Standard poker
 
 _WHEEL_STANDARD = (5, frozenset((14, 5, 4, 3, 2)))
-_STRAIGHT_SEQS_STANDARD = (_WHEEL_STANDARD,) + tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1))
+_STRAIGHT_SEQS_STANDARD = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1)) + _WHEEL_STANDARD
 
 def ranking_standard(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under the usual rules."""
@@ -133,7 +133,7 @@ def evaluate_standard(pool: tuple[Card, ...]) -> int:
 # Short deck poker
 
 _WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
-_STRAIGHT_SEQS_SHORT_DECK = (_WHEEL_SHORT_DECK,) + tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1))
+_STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1)) + _WHEEL_SHORT_DECK
 
 def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card]) -> int:
     """Rank a 5-card set under short deck rules."""
