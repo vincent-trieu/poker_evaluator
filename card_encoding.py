@@ -43,6 +43,8 @@ class Card:
             raise ValueError(f"Invalid card string: {s!r} (expected 2 chars)")
 
         rank_char, suit_char = s[0], s[1]
+        if rank_char not in cls.RANK_MAP or suit_char not in cls.SUIT_MAP:
+            raise ValueError(f"Invalid card: {s!r}")
         
         try:
             rank = cls.RANK_MAP[rank_char]
@@ -51,6 +53,12 @@ class Card:
             raise ValueError(f"Invalid card character in {s!r}: {e}")
 
         return cls(rank, suit)
+    
+    def __post_init__(self):
+        if not (2 <= self.rank <= 14):
+            raise ValueError(f"Invalid rank: {self.rank}")
+        if not (0 <= self.suit <= 3):
+            raise ValueError(f"Invalid suit: {self.suit}")
     
     def __str__(self):
         rank_str = self.RANK_CHARS[self.rank]
