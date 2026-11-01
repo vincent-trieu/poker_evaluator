@@ -232,17 +232,17 @@ class TestRankCounts:
     def test_count_distinct_ranks(self):
         cards = tuple(Card.from_str(c) for c in "Ah 2h 3d 4c 5s".split())
         counts = rank_counts(cards)
-        assert counts == {14: 1, 2: 1, 3: 1, 4: 1, 5: 1}
+        assert counts == [(1, 14), (1, 5), (1, 4), (1, 3), (1, 2)]
 
     def test_count_pairs(self):
         cards = tuple(Card.from_str(c) for c in "Ah As Kh Kc 2d".split())
         counts = rank_counts(cards)
-        assert counts == {14: 2, 13: 2, 2: 1}
+        assert counts == [(2, 14), (2, 13), (1, 2)]
 
     def test_count_three_of_a_kind(self):
         cards = tuple(Card.from_str(c) for c in "Ah As Ad 2c 3d".split())
         counts = rank_counts(cards)
-        assert counts == {14: 3, 2: 1, 3: 1}
+        assert counts == [(3, 14), (1, 3), (1, 2)]
 
 
 class TestIsFlush:
@@ -646,7 +646,7 @@ try:
         def test_ace_to_five_no_pair_beats_any_pair_shape(self, cards: list[Card]):
             """Unpaired hands beat paired hands in Ace-to-Five lowball."""
             counts = rank_counts(cards)
-            no_pair = all(c == 1 for c in counts.values())
+            no_pair = all(c == 1 for c in counts[0])
             
             if no_pair:
                 code_no_pair = evaluate_ace_to_five_low(tuple(cards))

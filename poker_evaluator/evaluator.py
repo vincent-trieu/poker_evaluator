@@ -37,7 +37,7 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
 
 # Generic helpers
 
-def rank_counts(cards) -> tuple[tuple[int, int], ...]:
+def rank_counts(cards) -> list[tuple[int, int], ...]:
     """Takes a sequence of cards and returns a tuple of the number seen of each rank."""
     counts = [0] * 15
     for c in cards:
