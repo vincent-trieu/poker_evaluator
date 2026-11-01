@@ -144,7 +144,7 @@ def ranking_standard(cards: tuple[int, int, int, int, int], leading_hand_categor
         if flush:
             if leading_hand_category > 5:
                 return (0, 0)
-            return (hand_rank_code(5, sorted((c.rank for c in cards), reverse=True), 5), 5)
+            return (hand_rank_code(5, sorted((c >> 4 for c in cards), reverse=True), 5), 5)
         if str_high is not None:
             if leading_hand_category > 4:
                 return (0, 0)
@@ -207,7 +207,7 @@ def ranking_short_deck(cards: tuple[int, int, int, int, int], leading_hand_categ
         if flush:
             if leading_hand_category > 6:
                 return (0, 0)
-            return (hand_rank_code(6, sorted((c.rank for c in cards), reverse=True), 5), 6)
+            return (hand_rank_code(6, sorted((c >> 4 for c in cards), reverse=True), 5), 6)
         if str_high is not None:
             if leading_hand_category > 4:
                 return (0, 0)
