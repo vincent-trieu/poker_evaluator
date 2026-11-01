@@ -37,12 +37,13 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
 
 # Generic helpers
 
-def rank_counts(cards) -> dict:
+def rank_counts(cards) -> tuple[tuple[int, int], ...]:
     """Takes a sequence of cards and returns a dict of the number seen of each rank."""
-    counts: dict = {}
+    counts = [0] * 15
     for c in cards:
-        counts[c.rank] = counts.get(c.rank, 0) + 1
-    return counts
+        counts[c.rank] += 1
+    groups = sorted(((cnt, r) for r, cnt in enumerate(counts) if cnt), reverse=True)
+    return groups
 
 def is_flush(cards: tuple[Card, Card, Card, Card, Card]) -> bool:
     """Checks if the cards are all the same suit."""
@@ -101,9 +102,8 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_ca
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
 
     counts = rank_counts(cards)
-    groups = sorted(counts.items(), key=lambda kv: (-kv[1], -kv[0]))
-    shape = tuple(cnt for _, cnt in groups)
-    group_ranks = [rank for rank, _ in groups]
+    shape = tuple(cnt for cnt, _ in counts)
+    group_ranks = [rank for _, rank in counts]
 
     if shape == (4, 1):
         if leading_hand_category > 7:
@@ -160,9 +160,8 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
 
     counts = rank_counts(cards)
-    groups = sorted(counts.items(), key=lambda kv: (-kv[1], -kv[0]))
-    shape = tuple(cnt for _, cnt in groups)
-    group_ranks = [rank for rank, _ in groups]
+    shape = tuple(cnt for cnt, _ in counts)
+    group_ranks = [rank for _, rank in counts]
 
     if shape == (4, 1):
         if leading_hand_category > 7:
@@ -214,10 +213,9 @@ def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card], leading_
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
 
     counts = rank_counts(cards)
-    groups = sorted(counts.items(), key=lambda kv: (-kv[1], -kv[0]))
-    shape = tuple(cnt for _, cnt in groups)
+    shape = tuple(cnt for cnt, _ in counts)
     # Aces are low - invert all other cards
-    group_ranks = [(14 if rank == 14 else (14 - rank)) for rank, _ in groups]
+    group_ranks = [(14 if rank == 14 else (14 - rank)) for _, rank in counts]
 
     if shape == (4, 1):
         if leading_hand_category > 0:
