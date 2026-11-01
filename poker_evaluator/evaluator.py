@@ -35,9 +35,6 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
         code = (code << 4) + (card_ranks[i] if i < len(card_ranks) else 0)
     return code
 
-def _subset_key(pool_subset: tuple[int, ...]) -> int:
-    return sum(c << (8 * i) for i, c in enumerate(sorted(pool_subset)))
-
 # Generic helpers
 
 def rank_counts(cards) -> list[tuple[int, int], ...]:
@@ -101,13 +98,15 @@ def straight_high(
 def best_of_subsets(
     subsets: tuple[tuple[int, ...], ...],
     ranking_func: Callable[[tuple[int, ...]], int],
-    cache: dict[tuple[int, ...], int] = dict(),
+    cache: dict[tuple[int, ...], int] | None = None,
 ) -> int:
     """
     Maximum rank code over all subsets of cards given.
 
     Subsets should be consistently ordered for best performance.
     """
+    if cache is None:
+        cache = dict()
     best = None
     leading_hand_category = 0
     for subset in subsets:

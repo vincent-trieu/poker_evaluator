@@ -25,7 +25,7 @@ from poker_evaluator.card_encoding import (
 )
 from poker_evaluator.evaluator import (
     hand_rank_code, rank_counts, is_flush, straight_high,
-    best_of_subsets, _subset_key,
+    best_of_subsets,
     ranking_standard, evaluate_standard,
     ranking_short_deck, evaluate_short_deck,
     ranking_ace_to_five_low, evaluate_ace_to_five_low,
@@ -204,35 +204,6 @@ class TestHandRankCode:
         code1 = hand_rank_code(0, [14, 10, 8, 6, 4], 5)
         code2 = hand_rank_code(0, [14, 10, 8, 6, 5], 5)
         assert code1 < code2
-
-
-class TestSubsetKey:
-    """Tests for _subset_key canonicalization."""
-
-    def test_sorted_tuple_produces_canonical_key(self):
-        """Different orderings of same cards produce identical keys."""
-        c1 = c("As", "Ks", "Qs")
-        c2 = c("Qs", "As", "Ks")
-        c3 = c("Ks", "Qs", "As")
-        
-        assert _subset_key(c1) == _subset_key(c2) == _subset_key(c3)
-
-    '''def test_unsorted_inputs_produce_different_keys_without_sort(self):
-        """Without sorting, order matters (before sorting in evaluate_standard)."""
-        c1 = c("As", "Ks")
-        c2 = c("Ks", "As")
-        
-        # These will differ if we don't sort pool before calling _subset_key
-        # (The function itself doesn't sort - caller responsibility)
-        assert _subset_key(c1) != _subset_key(c2)'''
-
-    '''def test_key_reconstruction(self):
-        """Decode packed key should recover original cards."""
-        cards = c("Ah", "2d", "3s", "4c", "5h")
-        key = _subset_key(cards)
-        
-        decoded = tuple((key >> (8 * i)) & 0xFF for i in range(5))
-        assert decoded == cards'''
 
 
 # =============================================================================
