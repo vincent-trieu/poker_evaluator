@@ -105,7 +105,7 @@ _WHEEL_STANDARD = (5, frozenset((14, 5, 4, 3, 2)))
 _STRAIGHT_SEQS_STANDARD = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1)) + (_WHEEL_STANDARD,)
 _STRAIGHT_BY_MASK_STANDARD = {rank_mask(ranks): high for high, ranks in _STRAIGHT_SEQS_STANDARD}
 
-def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_category: int) -> tuple[int, int]:
+def ranking_standard(cards: tuple[int, int, int, int, int], leading_hand_category: int) -> tuple[int, int]:
     """Rank a 5-card set under the usual rules."""
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
@@ -168,7 +168,7 @@ _WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
 _STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1))  + (_WHEEL_SHORT_DECK,)
 _STRAIGHT_BY_MASK_SHORT_DECK = {rank_mask(ranks): high for high, ranks in _STRAIGHT_SEQS_SHORT_DECK}
 
-def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_category: int) -> tuple[int, int]:
+def ranking_short_deck(cards: tuple[int, int, int, int, int], leading_hand_category: int) -> tuple[int, int]:
     """Rank a 5-card set under short deck rules."""
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
@@ -196,7 +196,7 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_
     if shape == (2, 1, 1, 1):
         if leading_hand_category > 1:
             return (0, 0)
-        return (1, hand_rank_code(1, group_ranks, 5))
+        return (hand_rank_code(1, group_ranks, 5), 1)
     if shape == (1, 1, 1, 1, 1):
         flush = is_flush(cards)
         str_high = straight_high(cards, _STRAIGHT_BY_MASK_SHORT_DECK)
@@ -211,7 +211,7 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_
         if str_high is not None:
             if leading_hand_category > 4:
                 return (0, 0)
-            return (hand_rank_code(4, [str_high], 5), 5)
+            return (hand_rank_code(4, [str_high], 5), 4)
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
@@ -221,7 +221,7 @@ def evaluate_short_deck(pool: tuple[int, ...]) -> int:
 
 # Ace to Five low
 
-def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card], leading_hand_category: int) -> tuple[int, int]:
+def ranking_ace_to_five_low(cards: tuple[int, int, int, int, int], leading_hand_category: int) -> tuple[int, int]:
     """Rank a 5-card set under Ace to Five low rules."""
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
@@ -267,9 +267,9 @@ def legal_badugi(cards: tuple[int, ...]) -> bool:
     ranks = [c >> 4 for c in cards]
     return len(set(suits)) == len(suits) and len(set(ranks)) == len(ranks)
 
-def ranking_badugi(cards: tuple[Card, ...], leading_hand_category: int) -> tuple[int, int]:
+def ranking_badugi(cards: tuple[int, ...], leading_hand_category: int) -> tuple[int, int]:
     """Ranks a hand based on Badugi rules. Assumes it's a legal hand, otherwise the code is nonsense."""
-    ranks = sorted((14 if card.rank == 14 else (14 - card.rank) for card in cards))
+    ranks = sorted((14 if (card >> 4) == 14 else (14 - (card >> 4)) for card in cards))
     return (hand_rank_code(0, ranks, len(cards)), 0)
 
 def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
