@@ -53,8 +53,14 @@ def is_flush(cards: tuple[int, int, int, int, int]) -> bool:
             return False
     return True
 
+def rank_mask(ranks) -> int:
+    m = 0
+    for r in ranks:
+        m |= 1 << (r - 2)
+    return m
+
 def straight_high(
-    cards: tuple[int, int, int, int, int], sequences: tuple[tuple[int, frozenset[int, int, int, int, int]], ...]
+    cards: tuple[int, int, int, int, int], sequence_table: dict[int, int]
 ) -> int | None:
     """
     High card of the straight, or None.
@@ -63,14 +69,12 @@ def straight_high(
     """
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
-    rank_set = {c >> 4 for c in cards}
-    if len(rank_set) != 5:
+    m = 0
+    for c in cards:
+        m |= 1 << ((c >> 4) - 2)
+    if m.bit_count() != 5:
         return None
-    best = None
-    for seq in sequences:
-        if seq[1] == rank_set:
-            return seq[0]
-    return best
+    return sequence_table.get(m)
 
 def best_of_subsets(
     pool: tuple[int, ...],
@@ -95,6 +99,7 @@ def best_of_subsets(
 
 _WHEEL_STANDARD = (5, frozenset((14, 5, 4, 3, 2)))
 _STRAIGHT_SEQS_STANDARD = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 1, -1)) + (_WHEEL_STANDARD,)
+_STRAIGHT_BY_MASK_STANDARD = {rank_mask(ranks): high for high, ranks in _STRAIGHT_SEQS_STANDARD}
 
 def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_category: int) -> tuple[int, int]:
     """Rank a 5-card set under the usual rules."""
@@ -128,7 +133,7 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_ca
     if shape == (1, 1, 1, 1, 1):
         # Flushes and straights only possible with this shape
         flush = is_flush(cards)
-        str_high = straight_high(cards, _STRAIGHT_SEQS_STANDARD)
+        str_high = straight_high(cards, _STRAIGHT_BY_MASK_STANDARD)
 
         if flush and str_high is not None:
             return (hand_rank_code(8, [str_high], 5), 8)
@@ -153,6 +158,7 @@ def evaluate_standard(pool: tuple[int, ...]) -> int:
 
 _WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
 _STRAIGHT_SEQS_SHORT_DECK = tuple((low + 4, frozenset(range(low, low + 5))) for low in range(10, 5, -1))  + (_WHEEL_SHORT_DECK,)
+_STRAIGHT_BY_MASK_SHORT_DECK = {rank_mask(ranks): high for high, ranks in _STRAIGHT_SEQS_SHORT_DECK}
 
 def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_category: int) -> tuple[int, int]:
     """Rank a 5-card set under short deck rules."""
@@ -185,7 +191,7 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_
         return (1, hand_rank_code(1, group_ranks, 5))
     if shape == (1, 1, 1, 1, 1):
         flush = is_flush(cards)
-        str_high = straight_high(cards, _STRAIGHT_SEQS_SHORT_DECK)
+        str_high = straight_high(cards, _STRAIGHT_BY_MASK_SHORT_DECK)
 
         if flush and str_high is not None:
             return (hand_rank_code(8, [str_high], 5), 8)
