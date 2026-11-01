@@ -41,19 +41,20 @@ def rank_counts(cards) -> dict:
     """Takes a sequence of cards and returns a dict of the number seen of each rank."""
     counts: dict = {}
     for c in cards:
-        counts[c.rank] = counts.get(c.rank, 0) + 1
+        rank = c >> 4
+        counts[rank] = counts.get(rank, 0) + 1
     return counts
 
-def is_flush(cards: tuple[Card, Card, Card, Card, Card]) -> bool:
+def is_flush(cards: tuple[int, int, int, int, int]) -> bool:
     """Checks if the cards are all the same suit."""
-    suit_to_check = cards[0].suit
+    suit_to_check = cards[0] & 0xF
     for card in cards[1:5]:
-        if card.suit != suit_to_check:
+        if (card & 0xF) != suit_to_check:
             return False
     return True
 
 def straight_high(
-    cards: tuple[Card, Card, Card, Card, Card], sequences: tuple[tuple[int, frozenset[int, int, int, int, int]], ...]
+    cards: tuple[int, int, int, int, int], sequences: tuple[tuple[int, frozenset[int, int, int, int, int]], ...]
 ) -> int | None:
     """
     High card of the straight, or None.
@@ -62,7 +63,7 @@ def straight_high(
     """
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
-    rank_set = {c.rank for c in cards}
+    rank_set = {c >> 4 for c in cards}
     if len(rank_set) != 5:
         return None
     best = None
@@ -72,9 +73,9 @@ def straight_high(
     return best
 
 def best_of_subsets(
-    pool: tuple[Card, ...],
+    pool: tuple[int, ...],
     size_of_subsets: int,
-    ranking_func: Callable[[tuple[Card, ...]], int],
+    ranking_func: Callable[[tuple[int, ...]], int],
 ) -> int:
     """Maximum rank code over all size-k subsets of the pool."""
     if len(pool) < size_of_subsets:
@@ -145,7 +146,7 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_ca
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_standard(pool: tuple[Card, ...]) -> int:
+def evaluate_standard(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from a pool (Hold'em, stud, Omaha, etc.)."""
     return best_of_subsets(pool, 5, ranking_standard)
 
@@ -202,7 +203,7 @@ def ranking_short_deck(cards: tuple[Card, Card, Card, Card, Card], leading_hand_
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_short_deck(pool: tuple[Card, ...]) -> int:
+def evaluate_short_deck(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from a pool (short deck)."""
     return best_of_subsets(pool, 5, ranking_short_deck)
 
@@ -243,16 +244,16 @@ def ranking_ace_to_five_low(cards: tuple[Card, Card, Card, Card, Card], leading_
         return (hand_rank_code(5, group_ranks, 5), 5)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_ace_to_five_low(pool: tuple[Card, ...]) -> int:
+def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
     """Best ('worst') 5-card hand from a pool (Ace to Five low)."""
     return best_of_subsets(pool, 5, ranking_ace_to_five_low)
 
 # Badugi
 
-def legal_badugi(cards: tuple[Card, ...]) -> bool:
+def legal_badugi(cards: tuple[int, ...]) -> bool:
     """Checks if a Badugi hand is legal (has no matching card ranks or suits)."""
-    suits = [c.suit for c in cards]
-    ranks = [c.rank for c in cards]
+    suits = [c & 0xF for c in cards]
+    ranks = [c >> 4 for c in cards]
     return len(set(suits)) == len(suits) and len(set(ranks)) == len(ranks)
 
 def ranking_badugi(cards: tuple[Card, ...], leading_hand_category: int) -> tuple[int, int]:
@@ -260,7 +261,7 @@ def ranking_badugi(cards: tuple[Card, ...], leading_hand_category: int) -> tuple
     ranks = sorted((14 if card.rank == 14 else (14 - card.rank) for card in cards))
     return (hand_rank_code(0, ranks, len(cards)), 0)
 
-def evaluate_badugi(hand: tuple[Card, Card, Card, Card]) -> int:
+def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
     """
     Badugi evaluation of four cards.
 

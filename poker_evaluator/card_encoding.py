@@ -32,28 +32,34 @@ def card_from_str(s: str) -> int:
     if rank_char not in RANK_MAP or suit_char not in SUIT_MAP:
         raise ValueError(f"Invalid card: {s!r}")
     
-    rank = cls.RANK_MAP[rank_char]
-    suit = cls.SUIT_MAP[suit_char]
+    rank = RANK_MAP[rank_char]
+    suit = SUIT_MAP[suit_char]
     return card_to_int(rank, suit)
 
 def card_to_int(rank: int, suit: int) -> int:
+    if not (2 <= rank <= 14):
+        raise ValueError(f"Invalid rank: {rank}")
+    if not (0 <= suit <= 3):
+        raise ValueError(f"Invalid suit: {suit}")
     return (rank << 4) | suit
 
+# Not actually used to save on function-call overhead
 def int_to_rank(card: int) -> int:
     return card >> 4
 
+# Not actually used to save on function-call overhead
 def int_to_suit(card: int) -> int:
     return card & 0xF
 
 def standard_deck() -> list[Card]:
     """Return a list of all 52 standard cards."""
     ranks = list(range(2, 15))
-    suits = [Card.CLUBS, Card.DIAMONDS, Card.HEARTS, Card.SPADES]
+    suits = [CLUBS, DIAMONDS, HEARTS, SPADES]
     return [card_to_int(r, s) for r in ranks for s in suits]
 
 
 def short_deck() -> list[Card]:
     """Return a short deck (no twos, three, fours, or fives)."""
     ranks = list(range(6, 15))
-    suits = [Card.CLUBS, Card.DIAMONDS, Card.HEARTS, Card.SPADES]
+    suits = [CLUBS, DIAMONDS, HEARTS, SPADES]
     return [card_to_int(r, s) for r in ranks for s in suits]
