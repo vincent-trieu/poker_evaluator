@@ -8,7 +8,6 @@ This allows a level of flexibility that allows the evaluator to work with games
 like Badugi, which don't use the standard 5-card hand rankings.
 """
 
-from functools import lru_cache
 from itertools import combinations
 from typing import Callable
 
@@ -80,7 +79,7 @@ def straight_high(
         return None
     return sequence_table.get(m)
 
-def best_of_subsets(
+'''def best_of_subsets(
     pool: tuple[int, ...],
     size_of_subsets: int,
     ranking_func: Callable[[tuple[int, ...]], int],
@@ -97,6 +96,34 @@ def best_of_subsets(
             best = code
     if best is None:
         raise ValueError(f"Cards have no subset valid as a hand: {pool!r}")
+    return best'''
+
+def best_of_subsets(
+    subsets: tuple[tuple[int, ...], ...],
+    ranking_func: Callable[[tuple[int, ...]], int],
+    cache: dict[tuple[int, ...], int] = dict(),
+) -> int:
+    """
+    Maximum rank code over all subsets of cards given.
+
+    Subsets should be consistently ordered for best performance.
+    """
+    best = None
+    leading_hand_category = 0
+    for subset in subsets:
+        cached_code = cache.get(subset)
+        if cached_code != None:
+            if best is None or cached_code > best:
+                best = cached_code
+        else:
+            (code, hand_category) = ranking_func(subset, leading_hand_category)
+            if code != 0: # i.e. it wasn't skipped by leading_hand_category being too small
+                cache[subset] = code
+            if best is None or code > best:
+                leading_hand_category = hand_category
+                best = code
+    if best is None:
+        raise ValueError(f"No subset valid as a hand: {subsets!r}")
     return best
 
 # Standard poker
@@ -154,14 +181,6 @@ def ranking_standard(cards: tuple[int, int, int, int, int], leading_hand_categor
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
-@lru_cache(maxsize=2**21)
-def _ranking_cached(key: int, leading_hand_category: int) -> tuple[int, int]:
-    return ranking_standard(tuple((key >> (8 * i)) & 0xFF for i in range(5)), leading_hand_category)
-
-def evaluate_standard(pool: tuple[int, ...]) -> int:
-    """Best 5-card hand from a pool (Hold'em, stud, Omaha, etc.)."""
-    return best_of_subsets(pool, 5, lambda s, t: _ranking_cached(_subset_key(s), t))
-
 # Short deck poker
 
 _WHEEL_SHORT_DECK = (9, frozenset((14, 9, 8, 7, 6)))
@@ -215,10 +234,6 @@ def ranking_short_deck(cards: tuple[int, int, int, int, int], leading_hand_categ
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_short_deck(pool: tuple[int, ...]) -> int:
-    """Best 5-card hand from a pool (short deck)."""
-    return best_of_subsets(pool, 5, ranking_short_deck)
-
 # Ace to Five low
 
 def ranking_ace_to_five_low(cards: tuple[int, int, int, int, int], leading_hand_category: int) -> tuple[int, int]:
@@ -255,10 +270,6 @@ def ranking_ace_to_five_low(cards: tuple[int, int, int, int, int], leading_hand_
         return (hand_rank_code(5, group_ranks, 5), 5)
     raise AssertionError(f"unreachable shape {shape}")
 
-def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
-    """Best ('worst') 5-card hand from a pool (Ace to Five low)."""
-    return best_of_subsets(pool, 5, ranking_ace_to_five_low)
-
 # Badugi
 
 def legal_badugi(cards: tuple[int, ...]) -> bool:
@@ -271,6 +282,23 @@ def ranking_badugi(cards: tuple[int, ...], leading_hand_category: int) -> tuple[
     """Ranks a hand based on Badugi rules. Assumes it's a legal hand, otherwise the code is nonsense."""
     ranks = sorted((14 if (card >> 4) == 14 else (14 - (card >> 4)) for card in cards))
     return (hand_rank_code(0, ranks, len(cards)), 0)
+
+# Specific poker variant evaluation functions
+
+def evaluate_standard(pool: tuple[int, ...]) -> int:
+    """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
+    subsets = tuple(subset for subset in combinations(sorted(pool), 5))
+    return best_of_subsets(subsets, ranking_standard)
+
+def evaluate_short_deck(pool: tuple[int, ...]) -> int:
+    """Best 5-card hand from an n-card pool (e.g. short deck Texas Hold'em)."""
+    subsets = tuple(subset for subset in combinations(sorted(pool), 5))
+    return best_of_subsets(subsets, ranking_short_deck)
+
+def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
+    """Best ('worst') 5-card hand from an n-card pool (e.g. Razz)."""
+    subsets = tuple(subset for subset in combinations(sorted(pool), 5))
+    return best_of_subsets(subsets, ranking_ace_to_five_low)
 
 def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
     """
