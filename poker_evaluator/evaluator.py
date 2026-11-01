@@ -8,6 +8,7 @@ This allows a level of flexibility that allows the evaluator to work with games
 like Badugi, which don't use the standard 5-card hand rankings.
 """
 
+from functools import lru_cache
 from itertools import combinations
 from typing import Callable
 
@@ -34,6 +35,9 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
     for i in range(size):
         code = (code << 4) + (card_ranks[i] if i < len(card_ranks) else 0)
     return code
+
+def _subset_key(pool_subset: tuple[int, ...]) -> int:
+    return sum(c << (8 * i) for i, c in enumerate(sorted(pool_subset)))
 
 # Generic helpers
 
@@ -150,9 +154,13 @@ def ranking_standard(cards: tuple[Card, Card, Card, Card, Card], leading_hand_ca
         return (hand_rank_code(0, group_ranks, 5), 0)
     raise AssertionError(f"unreachable shape {shape}")
 
+@lru_cache(maxsize=2**21)
+def _ranking_cached(key: int, leading_hand_category: int) -> tuple[int, int]:
+    return ranking_standard(tuple((key >> (8 * i)) & 0xFF for i in range(5)), leading_hand_category)
+
 def evaluate_standard(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from a pool (Hold'em, stud, Omaha, etc.)."""
-    return best_of_subsets(pool, 5, ranking_standard)
+    return best_of_subsets(pool, 5, lambda s, t: _ranking_cached(_subset_key(s), t))
 
 # Short deck poker
 

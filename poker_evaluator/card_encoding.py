@@ -51,14 +51,14 @@ def int_to_rank(card: int) -> int:
 def int_to_suit(card: int) -> int:
     return card & 0xF
 
-def standard_deck() -> list[Card]:
+def standard_deck() -> list[int]:
     """Return a list of all 52 standard cards."""
     ranks = list(range(2, 15))
     suits = [CLUBS, DIAMONDS, HEARTS, SPADES]
     return [card_to_int(r, s) for r in ranks for s in suits]
 
 
-def short_deck() -> list[Card]:
+def short_deck() -> list[int]:
     """Return a short deck (no twos, three, fours, or fives)."""
     ranks = list(range(6, 15))
     suits = [CLUBS, DIAMONDS, HEARTS, SPADES]
