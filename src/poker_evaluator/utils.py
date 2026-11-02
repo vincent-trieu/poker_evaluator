@@ -27,7 +27,7 @@ def short_deck() -> list[int]:
 
 
 def hand_rank_code(
-    hand_category: int, card_ranks: Sequence[int, ...], size: int
+    hand_category: int, card_ranks: Sequence[int], size: int
 ) -> tuple[int, int]:
     """
     Function that returns an encoding of a hand and its ranking, as a comparable int.
@@ -53,7 +53,7 @@ def hand_rank_code(
 
 def hrc_category_filtered(
     hand_category: int,
-    card_ranks: Sequence[int, ...],
+    card_ranks: Sequence[int],
     size: int,
     leading_hand_category: int,
 ) -> tuple[int, int]:
@@ -70,7 +70,7 @@ def hrc_category_filtered(
 
 
 def best_of_subsets(
-    subsets: Iterable[tuple[int, ...], ...],
+    subsets: Iterable[tuple[int, ...]],
     ranking_func: Callable[[tuple[int, ...]], int],
     cache: dict[tuple[int, ...], int] | None = None,
     allow_none: bool = False,

@@ -8,6 +8,7 @@ This allows a level of flexibility that allows the evaluator to work with games
 like Badugi, which don't use the standard 5-card hand rankings.
 """
 
+from collections.abc import Iterable
 from itertools import combinations
 
 from poker_evaluator.utils import best_of_subsets, hand_rank_code, hrc_category_filtered
@@ -15,7 +16,7 @@ from poker_evaluator.utils import best_of_subsets, hand_rank_code, hrc_category_
 # Generic helpers
 
 
-def rank_counts(cards) -> list[tuple[int, int], ...]:
+def rank_counts(cards: Iterable[int]) -> list[tuple[int, int]]:
     """
     Takes a sequence of cards and returns a tuple of the number seen of each rank.
 
@@ -29,7 +30,7 @@ def rank_counts(cards) -> list[tuple[int, int], ...]:
     return groups
 
 
-def is_flush(cards: tuple[int, ...]) -> bool:
+def is_flush(cards: Iterable[int]) -> bool:
     """Checks if the cards are all the same suit."""
     suit_to_check = None
     for card in cards:
@@ -40,7 +41,7 @@ def is_flush(cards: tuple[int, ...]) -> bool:
     return True
 
 
-def rank_mask(ranks) -> int:
+def rank_mask(ranks: Iterable[int]) -> int:
     m = 0
     for r in ranks:
         # Smallest rank is 2
