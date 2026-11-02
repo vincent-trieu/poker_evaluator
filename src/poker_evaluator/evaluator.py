@@ -29,11 +29,13 @@ def rank_counts(cards) -> list[tuple[int, int], ...]:
     return groups
 
 
-def is_flush(cards: tuple[int, int, int, int, int]) -> bool:
+def is_flush(cards: tuple[int, ...]) -> bool:
     """Checks if the cards are all the same suit."""
-    suit_to_check = cards[0] & 0xF
-    for card in cards[1:5]:
-        if (card & 0xF) != suit_to_check:
+    suit_to_check = None
+    for card in cards:
+        if suit_to_check is None:
+            suit_to_check = card & 0xF
+        elif (card & 0xF) != suit_to_check:
             return False
     return True
 
