@@ -15,29 +15,35 @@ Install dependencies:
 """
 
 import pytest
-from itertools import combinations
-from typing import Tuple
 
 # Import your modules
 from poker_evaluator.card_encoding import (
-    card_from_str, card_to_int, int_to_rank, int_to_suit, standard_deck, short_deck,
-    CLUBS, DIAMONDS, HEARTS, SPADES
+    CLUBS,
+    DIAMONDS,
+    HEARTS,
+    SPADES,
+    card_from_str,
+    card_to_int,
 )
 from poker_evaluator.evaluator import (
-    hand_rank_code, rank_counts, is_flush, straight_high,
-    best_of_subsets,
-    ranking_standard, evaluate_standard,
-    ranking_short_deck, evaluate_short_deck,
-    ranking_ace_to_five_low, evaluate_ace_to_five_low,
-    ranking_badugi, evaluate_badugi, legal_badugi,
-    _STRAIGHT_SEQS_STANDARD, _STRAIGHT_SEQS_SHORT_DECK,
-    _STRAIGHT_BY_MASK_STANDARD, _STRAIGHT_BY_MASK_SHORT_DECK
+    _STRAIGHT_BY_MASK_SHORT_DECK,
+    _STRAIGHT_BY_MASK_STANDARD,
+    evaluate_ace_to_five_low,
+    evaluate_badugi,
+    evaluate_short_deck,
+    evaluate_standard,
+    hand_rank_code,
+    is_flush,
+    legal_badugi,
+    rank_counts,
+    straight_high,
 )
-
+from poker_evaluator.utils import short_deck, standard_deck
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def full_deck():
@@ -54,7 +60,7 @@ def short_deck_only():
 @pytest.fixture
 def ah_askhkc():
     """Sample hand fixture (pairs of Aces and Kings)."""
-    return tuple(card_from_str(c) for c in "Ah As Kh Kc 2d".split())
+    return tuple(card_from_str(c) for c in ["Ah", "As", "Kh", "Kc", "2d"])
 
 
 def c(*card_strings: str) -> tuple[int, ...]:
@@ -65,6 +71,7 @@ def c(*card_strings: str) -> tuple[int, ...]:
 # =============================================================================
 # CARD LAYER TESTS
 # =============================================================================
+
 
 class TestCardParsing:
     """Tests for card_from_str() and card_to_int() construction."""
@@ -112,7 +119,7 @@ class TestCardParsing:
     def test_card_to_int_validation(self):
         card_to_int(2, 0)  # Minimum valid
         card_to_int(14, 3)  # Maximum valid
-        
+
         with pytest.raises(ValueError, match="Invalid rank"):
             card_to_int(1, 0)
         with pytest.raises(ValueError, match="Invalid rank"):
@@ -127,7 +134,7 @@ class TestCardParsing:
         card = card_to_int(14, HEARTS)
         assert (card >> 4) == 14
         assert (card & 0xF) == HEARTS
-        
+
         card = card_to_int(7, CLUBS)
         assert (card >> 4) == 7
         assert (card & 0xF) == CLUBS
@@ -178,6 +185,7 @@ class TestDeckGeneration:
 # HAND ENCODING TESTS
 # =============================================================================
 
+
 class TestHandRankCode:
     """Tests for hand_rank_code encoding logic."""
 
@@ -210,6 +218,7 @@ class TestHandRankCode:
 # HELPER FUNCTION TESTS
 # =============================================================================
 
+
 class TestRankCounts:
     """Tests for rank_counts helper."""
 
@@ -240,7 +249,7 @@ class TestRankCounts:
         """Groups should be sorted by count desc, then rank desc."""
         cards = c("Ah", "As", "Kh", "2c", "3d")  # Pair of Aces
         groups = rank_counts(cards)
-        
+
         # First entry should be the pair (count=2, rank=14)
         assert groups[0] == (2, 14)
         # Remaining entries should be singles in descending rank order
@@ -285,10 +294,10 @@ class TestStraightHigh:
         """Wheel must be lower than 6-high straight."""
         wheel = c("As", "2s", "3s", "4s", "5s")
         six_high = c("6s", "2s", "3s", "4s", "5s")
-        
+
         wheel_high = straight_high(wheel, _STRAIGHT_BY_MASK_STANDARD)
         six_high_val = straight_high(six_high, _STRAIGHT_BY_MASK_STANDARD)
-        
+
         assert wheel_high == 5
         assert six_high_val == 6
         assert wheel_high < six_high_val
@@ -302,18 +311,31 @@ class TestStraightHigh:
     def test_all_straights_have_correct_high_values(self):
         """Every straight from wheel to Broadway should have correct high value."""
         # Wheel
-        assert straight_high(c("As", "2s", "3s", "4s", "5s"), _STRAIGHT_BY_MASK_STANDARD) == 5
+        assert (
+            straight_high(c("As", "2s", "3s", "4s", "5s"), _STRAIGHT_BY_MASK_STANDARD)
+            == 5
+        )
         # 6-high
-        assert straight_high(c("2s", "3s", "4s", "5s", "6s"), _STRAIGHT_BY_MASK_STANDARD) == 6
+        assert (
+            straight_high(c("2s", "3s", "4s", "5s", "6s"), _STRAIGHT_BY_MASK_STANDARD)
+            == 6
+        )
         # 7-high
-        assert straight_high(c("3s", "4s", "5s", "6s", "7s"), _STRAIGHT_BY_MASK_STANDARD) == 7
+        assert (
+            straight_high(c("3s", "4s", "5s", "6s", "7s"), _STRAIGHT_BY_MASK_STANDARD)
+            == 7
+        )
         # Broadway
-        assert straight_high(c("Ts", "Js", "Qs", "Ks", "As"), _STRAIGHT_BY_MASK_STANDARD) == 14
+        assert (
+            straight_high(c("Ts", "Js", "Qs", "Ks", "As"), _STRAIGHT_BY_MASK_STANDARD)
+            == 14
+        )
 
 
 # =============================================================================
 # STANDARD POKER TESTS
 # =============================================================================
+
 
 class TestStandardHandRankings:
     """Tests for complete hand rankings in standard rules."""
@@ -406,6 +428,7 @@ class TestStandardHandRankings:
 # SEVEN-CARD EVALUATION TESTS
 # =============================================================================
 
+
 class TestSevenCardEvaluation:
     """Tests for multi-card pool evaluation."""
 
@@ -433,6 +456,7 @@ class TestSevenCardEvaluation:
 # =============================================================================
 # SHORT DECK TESTS
 # =============================================================================
+
 
 class TestShortDeckStraights:
     """Tests for straight detection in short deck rules."""
@@ -482,6 +506,7 @@ class TestShortDeckRankings:
 # ACE-TO-FIVE LOWBALL TESTS
 # =============================================================================
 
+
 class TestAceToFiveLowball:
     """Tests for Ace-to-Five lowball rankings."""
 
@@ -520,6 +545,7 @@ class TestAceToFiveLowball:
 # =============================================================================
 # BADUGI TESTS
 # =============================================================================
+
 
 class TestBadugiLegalHands:
     """Tests for Badugi hand legality."""
@@ -571,6 +597,7 @@ class TestBadugiRankings:
 # REGRESSION TESTS
 # =============================================================================
 
+
 class TestRegressionBugs:
     """Tests for specific bugs discovered during development."""
 
@@ -605,14 +632,16 @@ class TestRegressionBugs:
         """Straight high values should match actual high card."""
         six_high = c("6s", "2h", "3d", "4c", "5h")
         seven_high = c("7s", "3h", "4d", "5c", "6h")
-        
+
         code6 = evaluate_standard(six_high)
         code7 = evaluate_standard(seven_high)
-        
+
         # The difference should be exactly 1<<16
         expected_diff = 1 << 16
         actual_diff = code7 - code6
-        assert actual_diff == expected_diff, f"High nibble shift wrong: got {actual_diff}, expected {expected_diff}"
+        assert actual_diff == expected_diff, (
+            f"High nibble shift wrong: got {actual_diff}, expected {expected_diff}"
+        )
 
     def test_regression_short_deck_flush_over_full_house(self):
         """Short deck must have flush > full house, not the reverse."""
@@ -628,40 +657,52 @@ class TestRegressionBugs:
 # =============================================================================
 
 try:
-    from hypothesis import given, strategies as st
-    
+    from hypothesis import given
+    from hypothesis import strategies as st
+
     class TestPropertyBased:
         """Property-based tests using Hypothesis."""
-        
-        @given(st.lists(st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True))
+
+        @given(
+            st.lists(
+                st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True
+            )
+        )
         def test_evaluation_returns_integer(self, pool: list[int]):
             """Evaluator should always return an integer."""
             code = evaluate_standard(tuple(pool))
             assert isinstance(code, int)
-        
-        @given(st.lists(st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True))
+
+        @given(
+            st.lists(
+                st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True
+            )
+        )
         def test_monotonicity_on_card_addition(self, pool: list[int]):
             """Adding cards can only improve or keep the same hand."""
             if len(pool) >= 5:
                 base = evaluate_standard(tuple(pool[:5]))
                 extended = evaluate_standard(tuple(pool))
                 assert extended >= base
-        
-        @given(st.lists(st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True))
+
+        @given(
+            st.lists(
+                st.sampled_from(standard_deck()), min_size=5, max_size=7, unique=True
+            )
+        )
         def test_permutation_invariance(self, pool: list[int]):
             """Order of input cards should not affect result."""
             from random import shuffle
+
             shuffled = pool.copy()
             shuffle(shuffled)
             assert evaluate_standard(tuple(pool)) == evaluate_standard(tuple(shuffled))
-        
-        @given(st.integers(min_value=0, max_value=8))
-        def test_hand_category_encoding_range(self, category: int):
-            """Hand category should fit in one nibble (0-15)."""
-            code = hand_rank_code(category, [14, 13, 12, 11, 10], 5)
-            assert 0 <= category <= 15
-        
-        @given(st.lists(st.sampled_from(standard_deck()), min_size=5, max_size=5, unique=True))
+
+        @given(
+            st.lists(
+                st.sampled_from(standard_deck()), min_size=5, max_size=5, unique=True
+            )
+        )
         def test_ace_to_five_no_pair_beats_any_pair_shape(self, cards: list[int]):
             """Unpaired hands beat paired hands in Ace-to-Five lowball."""
             counts = {}
@@ -669,15 +710,17 @@ try:
                 r = c >> 4
                 counts[r] = counts.get(r, 0) + 1
             no_pair = all(cnt == 1 for cnt in counts.values())
-            
+
             if no_pair:
                 code_no_pair = evaluate_ace_to_five_low(tuple(cards))
                 modified = cards.copy()
                 modified[0] = cards[1]
                 code_pair = evaluate_ace_to_five_low(tuple(modified))
                 assert code_no_pair > code_pair
-        
-        @given(st.lists(st.sampled_from(short_deck()), min_size=5, max_size=7, unique=True))
+
+        @given(
+            st.lists(st.sampled_from(short_deck()), min_size=5, max_size=7, unique=True)
+        )
         def test_short_deck_evaluation_works(self, pool: list[int]):
             """Short deck evaluation should return valid codes."""
             code = evaluate_short_deck(tuple(pool))
@@ -692,37 +735,38 @@ except ImportError:
 # PERFORMANCE TESTS
 # =============================================================================
 
+
 def test_evaluation_speed_minimum():
     """Basic throughput test - adjust threshold based on your baseline."""
-    pool = tuple(card_from_str(c) for c in "2s 3h 4d 5c 6s 7h 8d".split())
-    
+    pool = tuple(card_from_str(c) for c in ["2s", "3h", "4d", "5c", "6s", "7h", "8d"])
+
     # Warm up cache
     for _ in range(100):
         evaluate_standard(pool)
-    
+
     iterations = 10000
     start = __import__("time").perf_counter()
     for _ in range(iterations):
         evaluate_standard(pool)
     elapsed = __import__("time").perf_counter() - start
-    
+
     rate = iterations / elapsed
     print(f"\nStandard eval: {rate:,.0f} evaluations/second")
-    
+
     # Minimum target: 50k evals/sec (already achieved 54k+)
     assert rate > 50_000, f"Too slow: {rate:.0f} evals/sec, need >50k"
 
 
 def test_short_deck_speed_comparison():
     """Compare short deck vs standard evaluation speed."""
-    pool = tuple(card_from_str(c) for c in "6s 7h 8d 9c Th Jh Qs".split())
-    
+    pool = tuple(card_from_str(c) for c in ["6s", "7h", "8d", "9c", "Th", "Jh", "Qs"])
+
     iterations = 10000
     start = __import__("time").perf_counter()
     for _ in range(iterations):
         evaluate_short_deck(pool)
     elapsed = __import__("time").perf_counter() - start
-    
+
     rate = iterations / elapsed
     print(f"Short deck eval: {rate:,.0f} evaluations/second")
 
