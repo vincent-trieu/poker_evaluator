@@ -4,7 +4,7 @@ poker_evaluator/utils.py
 Various functions and constants used in the evaluator code.
 """
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 
 from poker_evaluator.card_encoding import SUITS, card_to_int
 
@@ -26,7 +26,9 @@ def short_deck() -> list[int]:
 # Hand rank encoding functions
 
 
-def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
+def hand_rank_code(
+    hand_category: int, card_ranks: Sequence[int, ...], size: int
+) -> tuple[int, int]:
     """
     Function that returns an encoding of a hand and its ranking, as a comparable int.
     Better cards must be at the front.
@@ -47,6 +49,21 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
     for i in range(size):
         code = (code << 4) + (card_ranks[i] if i < len(card_ranks) else 0)
     return code
+
+
+def hrc_category_filtered(
+    hand_category: int,
+    card_ranks: Sequence[int, ...],
+    size: int,
+    leading_hand_category: int,
+) -> tuple[int, int]:
+    """
+    Version of hand_rank_code but if the hand_category is smaller than the leading_hand_category, the code
+    calculation is skipped and
+    """
+    if leading_hand_category > hand_category:
+        return (0, 0)
+    return (hand_rank_code(hand_category, card_ranks, size), hand_category)
 
 
 # Evaluation helpers

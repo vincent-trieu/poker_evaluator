@@ -10,13 +10,18 @@ like Badugi, which don't use the standard 5-card hand rankings.
 
 from itertools import combinations
 
-from poker_evaluator.utils import best_of_subsets, hand_rank_code
+from poker_evaluator.utils import best_of_subsets, hand_rank_code, hrc_category_filtered
 
 # Generic helpers
 
 
 def rank_counts(cards) -> list[tuple[int, int], ...]:
-    """Takes a sequence of cards and returns a tuple of the number seen of each rank."""
+    """
+    Takes a sequence of cards and returns a tuple of the number seen of each rank.
+
+    Note that the ordering is highest count, then highest rank. In particular, if each card has a different
+    rank, the ranks will be sorted in reverse order.
+    """
     counts = [0] * 15
     for c in cards:
         counts[c >> 4] += 1
@@ -82,25 +87,15 @@ def ranking_standard(
     group_ranks = [rank for _, rank in counts]
 
     if shape == (4, 1):
-        if leading_hand_category > 7:
-            return (0, 0)
-        return (hand_rank_code(7, group_ranks, 5), 7)
+        return hrc_category_filtered(7, group_ranks, 5, leading_hand_category)
     if shape == (3, 2):
-        if leading_hand_category > 6:
-            return (0, 0)
-        return (hand_rank_code(6, group_ranks, 5), 6)
+        return hrc_category_filtered(6, group_ranks, 5, leading_hand_category)
     if shape == (3, 1, 1):
-        if leading_hand_category > 3:
-            return (0, 0)
-        return (hand_rank_code(3, group_ranks, 5), 3)
+        return hrc_category_filtered(3, group_ranks, 5, leading_hand_category)
     if shape == (2, 2, 1):
-        if leading_hand_category > 2:
-            return (0, 0)
-        return (hand_rank_code(2, group_ranks, 5), 2)
+        return hrc_category_filtered(2, group_ranks, 5, leading_hand_category)
     if shape == (2, 1, 1, 1):
-        if leading_hand_category > 1:
-            return (0, 0)
-        return (hand_rank_code(1, group_ranks, 5), 1)
+        return hrc_category_filtered(1, group_ranks, 5, leading_hand_category)
     if shape == (1, 1, 1, 1, 1):
         # Flushes and straights only possible with this shape
         flush = is_flush(cards)
@@ -109,19 +104,10 @@ def ranking_standard(
         if flush and str_high is not None:
             return (hand_rank_code(8, [str_high], 5), 8)
         if flush:
-            if leading_hand_category > 5:
-                return (0, 0)
-            return (
-                hand_rank_code(5, sorted((c >> 4 for c in cards), reverse=True), 5),
-                5,
-            )
+            return hrc_category_filtered(5, group_ranks, 5, leading_hand_category)
         if str_high is not None:
-            if leading_hand_category > 4:
-                return (0, 0)
-            return (hand_rank_code(4, [str_high], 5), 4)
-        if leading_hand_category > 0:
-            return (0, 0)
-        return (hand_rank_code(0, group_ranks, 5), 0)
+            return hrc_category_filtered(4, [str_high], 5, leading_hand_category)
+        return hrc_category_filtered(0, group_ranks, 5, leading_hand_category)
     raise AssertionError(f"unreachable shape {shape}")
 
 
@@ -148,25 +134,15 @@ def ranking_short_deck(
     group_ranks = [rank for _, rank in counts]
 
     if shape == (4, 1):
-        if leading_hand_category > 7:
-            return (0, 0)
-        return (hand_rank_code(7, group_ranks, 5), 7)
+        return hrc_category_filtered(7, group_ranks, 5, leading_hand_category)
     if shape == (3, 2):
-        if leading_hand_category > 5:
-            return (0, 0)
-        return (hand_rank_code(5, group_ranks, 5), 5)
+        return hrc_category_filtered(5, group_ranks, 5, leading_hand_category)
     if shape == (3, 1, 1):
-        if leading_hand_category > 3:
-            return (0, 0)
-        return (hand_rank_code(3, group_ranks, 5), 3)
+        return hrc_category_filtered(3, group_ranks, 5, leading_hand_category)
     if shape == (2, 2, 1):
-        if leading_hand_category > 2:
-            return (0, 0)
-        return (hand_rank_code(2, group_ranks, 5), 2)
+        return hrc_category_filtered(2, group_ranks, 5, leading_hand_category)
     if shape == (2, 1, 1, 1):
-        if leading_hand_category > 1:
-            return (0, 0)
-        return (hand_rank_code(1, group_ranks, 5), 1)
+        return hrc_category_filtered(1, group_ranks, 5, leading_hand_category)
     if shape == (1, 1, 1, 1, 1):
         flush = is_flush(cards)
         str_high = straight_high(cards, _STRAIGHT_BY_MASK_SHORT_DECK)
@@ -175,17 +151,12 @@ def ranking_short_deck(
             return (hand_rank_code(8, [str_high], 5), 8)
         # Flushes are better than full houses in short deck
         if flush:
-            if leading_hand_category > 6:
-                return (0, 0)
-            return (
-                hand_rank_code(6, sorted((c >> 4 for c in cards), reverse=True), 5),
-                6,
-            )
+            return hrc_category_filtered(6, group_ranks, 5, leading_hand_category)
         if str_high is not None:
             if leading_hand_category > 4:
                 return (0, 0)
-            return (hand_rank_code(4, [str_high], 5), 4)
-        return (hand_rank_code(0, group_ranks, 5), 0)
+            return hrc_category_filtered(4, [str_high], 5, leading_hand_category)
+        return hrc_category_filtered(0, group_ranks, 5, leading_hand_category)
     raise AssertionError(f"unreachable shape {shape}")
 
 
@@ -205,25 +176,15 @@ def ranking_ace_to_five_low(
     group_ranks = [(14 if rank == 14 else (14 - rank)) for _, rank in counts]
 
     if shape == (4, 1):
-        if leading_hand_category > 0:
-            return (0, 0)
-        return (hand_rank_code(0, group_ranks, 5), 0)
+        return hrc_category_filtered(0, group_ranks, 5, leading_hand_category)
     if shape == (3, 2):
-        if leading_hand_category > 1:
-            return (0, 0)
-        return (hand_rank_code(1, group_ranks, 5), 1)
+        return hrc_category_filtered(1, group_ranks, 5, leading_hand_category)
     if shape == (3, 1, 1):
-        if leading_hand_category > 2:
-            return (0, 0)
-        return (hand_rank_code(2, group_ranks, 5), 2)
+        return hrc_category_filtered(2, group_ranks, 5, leading_hand_category)
     if shape == (2, 2, 1):
-        if leading_hand_category > 3:
-            return (0, 0)
-        return (hand_rank_code(3, group_ranks, 5), 3)
+        return hrc_category_filtered(3, group_ranks, 5, leading_hand_category)
     if shape == (2, 1, 1, 1):
-        if leading_hand_category > 4:
-            return (0, 0)
-        return (hand_rank_code(4, group_ranks, 5), 4)
+        return hrc_category_filtered(4, group_ranks, 5, leading_hand_category)
     if shape == (1, 1, 1, 1, 1):
         return (hand_rank_code(5, group_ranks, 5), 5)
     raise AssertionError(f"unreachable shape {shape}")
