@@ -36,6 +36,7 @@ def is_flush(cards: tuple[int, int, int, int, int]) -> bool:
 def rank_mask(ranks) -> int:
     m = 0
     for r in ranks:
+        # Smallest rank is 2
         m |= 1 << (r - 2)
     return m
 
@@ -251,19 +252,19 @@ def ranking_badugi(
 
 def evaluate_standard(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
-    subsets = tuple(combinations(sorted(pool), 5))
+    subsets = combinations(sorted(pool), 5)
     return best_of_subsets(subsets, ranking_standard)
 
 
 def evaluate_short_deck(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from an n-card pool (e.g. short deck Texas Hold'em)."""
-    subsets = tuple(combinations(sorted(pool), 5))
+    subsets = combinations(sorted(pool), 5)
     return best_of_subsets(subsets, ranking_short_deck)
 
 
 def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
     """Best ('worst') 5-card hand from an n-card pool (e.g. Razz)."""
-    subsets = tuple(combinations(sorted(pool), 5))
+    subsets = combinations(sorted(pool), 5)
     return best_of_subsets(subsets, ranking_ace_to_five_low)
 
 
@@ -274,13 +275,10 @@ def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
     Tries size 4 first (a full Badugi), then 3, 2, 1. More cards beats fewer.
     """
     for size in (4, 3, 2, 1):
-        best = None
-        for subset in combinations(hand, size):
-            if not legal_badugi(subset):
-                continue
-            (code, _) = ranking_badugi(subset, 0)
-            if best is None or code > best:
-                best = code
-        if best is not None:
-            return best
+        subsets = (
+            subset for subset in combinations(hand, size) if legal_badugi(subset)
+        )
+        code: int | None = best_of_subsets(subsets, ranking_badugi, allow_none=True)
+        if code is not None:
+            return code
     raise AssertionError(f"no subset is legal in hand {hand!r}")

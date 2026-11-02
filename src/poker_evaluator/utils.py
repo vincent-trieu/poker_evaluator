@@ -4,7 +4,7 @@ poker_evaluator/utils.py
 Various functions and constants used in the evaluator code.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from poker_evaluator.card_encoding import SUITS, card_to_int
 
@@ -53,10 +53,11 @@ def hand_rank_code(hand_category: int, card_ranks: tuple[int, ...], size: int):
 
 
 def best_of_subsets(
-    subsets: tuple[tuple[int, ...], ...],
+    subsets: Iterable[tuple[int, ...], ...],
     ranking_func: Callable[[tuple[int, ...]], int],
     cache: dict[tuple[int, ...], int] | None = None,
-) -> int:
+    allow_none: bool = False,
+) -> int | None:
     """
     Maximum rank code over all subsets of cards given.
 
@@ -80,6 +81,6 @@ def best_of_subsets(
             if best is None or code > best:
                 leading_hand_category = hand_category
                 best = code
-    if best is None:
+    if best is None and allow_none is False:
         raise ValueError(f"No subset valid as a hand: {subsets!r}")
     return best
