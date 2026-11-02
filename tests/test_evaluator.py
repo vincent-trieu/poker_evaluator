@@ -32,13 +32,12 @@ from poker_evaluator.evaluator import (
     evaluate_badugi,
     evaluate_short_deck,
     evaluate_standard,
-    hand_rank_code,
     is_flush,
     legal_badugi,
     rank_counts,
     straight_high,
 )
-from poker_evaluator.utils import short_deck, standard_deck
+from poker_evaluator.utils import hand_rank_code, short_deck, standard_deck
 
 # =============================================================================
 # FIXTURES
