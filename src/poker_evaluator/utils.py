@@ -102,7 +102,7 @@ def best_of_subsets(
     subsets: Iterable[tuple[int, ...]],
     ranking_func: Callable[[tuple[int, ...]], int],
     cache: dict[tuple[int, ...], int] | None = None,
-    allow_none: bool = False,
+    allow_no_valid_hand: bool = False,
 ) -> int | None:
     """
     Maximum rank code over all subsets of cards given.
@@ -111,22 +111,21 @@ def best_of_subsets(
     """
     if cache is None:
         cache = {}
-    best = None
+    best = 0 # No actual hand rank code is equal to zero
     leading_hand_category = 0
     for subset in subsets:
-        cached_code = cache.get(subset)
-        if cached_code != None:
-            if best is None or cached_code > best:
-                best = cached_code
-        else:
+        try:
+            code = cache[subset]
+        except KeyError:
             (code, hand_category) = ranking_func(subset, leading_hand_category)
-            if (
-                code != 0
-            ):  # i.e. it wasn't skipped by leading_hand_category being too small
+            if code != 0:  # i.e. not skipped by leading_hand_category being too small
                 cache[subset] = code
-            if best is None or code > best:
-                leading_hand_category = hand_category
+                if code > best:
+                    leading_hand_category = hand_category
+                    best = code
+        else:
+            if code > best:  # noqa: PLR1730
                 best = code
-    if best is None and allow_none is False:
+    if best == 0 and allow_no_valid_hand is False:
         raise ValueError(f"No subset valid as a hand: {subsets!r}")
     return best

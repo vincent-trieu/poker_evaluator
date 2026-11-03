@@ -138,8 +138,6 @@ def ranking_short_deck(
         if flush:
             return hrc_category_filtered(6, group_ranks, 5, leading_hand_category)
         if str_high is not None:
-            if leading_hand_category > 4:
-                return (0, 0)
             return hrc_category_filtered(4, [str_high], 5, leading_hand_category)
         return hrc_category_filtered(0, group_ranks, 5, leading_hand_category)
     raise AssertionError(f"unreachable shape {shape}")
@@ -224,7 +222,7 @@ def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
         subsets = (
             subset for subset in combinations(hand, size) if legal_badugi(subset)
         )
-        code: int | None = best_of_subsets(subsets, ranking_badugi, allow_none=True)
+        code: int | None = best_of_subsets(subsets, ranking_badugi, allow_no_valid_hand=True)
         if code is not None:
             return code
     raise AssertionError(f"no subset is legal in hand {hand!r}")
