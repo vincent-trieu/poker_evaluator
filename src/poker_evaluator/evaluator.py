@@ -11,23 +11,15 @@ like Badugi, which don't use the standard 5-card hand rankings.
 from collections.abc import Iterable
 from itertools import combinations
 
-from poker_evaluator.utils import best_of_subsets, hand_rank_code, hrc_category_filtered
+from poker_evaluator.utils import (
+    best_of_subsets,
+    hand_rank_code,
+    hrc_category_filtered,
+    rank_counts,
+    rank_mask,
+)
 
 # Generic helpers
-
-
-def rank_counts(cards: Iterable[int]) -> list[tuple[int, int]]:
-    """
-    Takes a sequence of cards and returns a tuple of the number seen of each rank.
-
-    Note that the ordering is highest count, then highest rank. In particular, if each card has a different
-    rank, the ranks will be sorted in reverse order.
-    """
-    counts = [0] * 15
-    for c in cards:
-        counts[c >> 4] += 1
-    groups = sorted(((cnt, r) for r, cnt in enumerate(counts) if cnt), reverse=True)
-    return groups
 
 
 def is_flush(cards: Iterable[int]) -> bool:
@@ -41,29 +33,19 @@ def is_flush(cards: Iterable[int]) -> bool:
     return True
 
 
-def rank_mask(ranks: Iterable[int]) -> int:
-    m = 0
-    for r in ranks:
-        # Smallest rank is 2
-        m |= 1 << (r - 2)
-    return m
-
-
 def straight_high(
     cards: tuple[int, int, int, int, int], sequence_table: dict[int, int]
 ) -> int | None:
     """
     High card of the straight, or None.
 
-    Assumes the sequences are in order from best to worst.
+    Assumes the sequences are in order from best to worst, and each rank is distinct.
     """
     if len(cards) != 5:
         raise ValueError(f"Invalid size: {cards!r} (expected 5 cards)")
     m = 0
     for c in cards:
         m |= 1 << ((c >> 4) - 2)
-    if m.bit_count() != 5:
-        return None
     return sequence_table.get(m)
 
 

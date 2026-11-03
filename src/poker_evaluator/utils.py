@@ -66,6 +66,35 @@ def hrc_category_filtered(
     return (hand_rank_code(hand_category, card_ranks, size), hand_category)
 
 
+# Rank-related helper functions
+
+
+def rank_counts(cards: Iterable[int]) -> list[tuple[int, int]]:
+    """
+    Takes a sequence of cards and returns a tuple of the number seen of each rank.
+
+    Note that the ordering is highest count, then highest rank. In particular, if each card has a different
+    rank, the ranks will be sorted in reverse order.
+    """
+    counts = [0] * 15
+    for c in cards:
+        counts[c >> 4] += 1
+    groups = sorted(((cnt, r) for r, cnt in enumerate(counts) if cnt), reverse=True)
+    return groups
+
+
+def rank_mask(ranks: Iterable[int]) -> int:
+    """
+    Produces a bitmask of the ranks of the cards (ints) given.
+    Positions are offset by two compared to rank.
+    """
+    m = 0
+    for r in ranks:
+        # Smallest rank is 2
+        m |= 1 << (r - 2)
+    return m
+
+
 # Evaluation helpers
 
 
