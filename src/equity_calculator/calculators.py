@@ -64,11 +64,11 @@ def generic_exhaustive_calculator(
         for board_id, board_runout in enumerate(runout):
             eval_function = evaluator_funcs[board_id]
             leading_players: list[int] = []
-            leading_code = None
+            leading_code = -1
             # Find winners of this board
             for player in live_players:
                 hand_code = eval_function(player[1] + board_runout, caches[board_id])
-                if leading_code is None or hand_code > leading_code:
+                if hand_code > leading_code:
                     leading_players = [player[0]]
                     leading_code = hand_code
                 elif hand_code == leading_code:
