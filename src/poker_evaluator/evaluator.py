@@ -194,35 +194,57 @@ def ranking_badugi(
 # Specific poker variant evaluation functions
 
 
-def evaluate_standard(pool: tuple[int, ...]) -> int:
+def evaluate_standard(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
     subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_standard)
+    if cache is None:
+        cache = {}
+    return best_of_subsets(subsets, ranking_standard, cache)
 
 
-def evaluate_short_deck(pool: tuple[int, ...]) -> int:
+def evaluate_short_deck(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """Best 5-card hand from an n-card pool (e.g. short deck Texas Hold'em)."""
     subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_short_deck)
+    if cache is None:
+        cache = {}
+    return best_of_subsets(subsets, ranking_short_deck, cache)
 
 
-def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
+def evaluate_ace_to_five_low(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """Best ('worst') 5-card hand from an n-card pool (e.g. Razz)."""
     subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_ace_to_five_low)
+    if cache is None:
+        cache = {}
+    return best_of_subsets(subsets, ranking_ace_to_five_low, cache)
 
 
-def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
+def evaluate_badugi(
+    hand: tuple[int, int, int, int],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """
     Badugi evaluation of four cards.
 
     Tries size 4 first (a full Badugi), then 3, 2, 1. More cards beats fewer.
     """
+    if cache is None:
+        cache = {}
     for size in (4, 3, 2, 1):
         subsets = (
             subset for subset in combinations(hand, size) if legal_badugi(subset)
         )
-        code: int | None = best_of_subsets(subsets, ranking_badugi, allow_no_valid_hand=True)
+        code: int | None = best_of_subsets(
+            subsets, ranking_badugi, cache, allow_no_valid_hand=True
+        )
         if code is not None:
             return code
     raise AssertionError(f"no subset is legal in hand {hand!r}")

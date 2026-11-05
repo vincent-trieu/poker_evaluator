@@ -52,6 +52,8 @@ def generic_exhaustive_calculator(
             f"Not enough cards in deck to complete boards. Deck has {len(actual_deck)} cards left; {draws_required_total} draws required."
         )
 
+    caches = tuple({} for i in range(len(evaluator_funcs)))
+
     player_wins: dict[int, float] = {player[0]: 0.0 for player in live_players}
     # Calculate all possible runouts given the given configuration
     for deal in potential_deals(actual_deck, draws_required_per_board):
@@ -65,7 +67,7 @@ def generic_exhaustive_calculator(
             leading_code = None
             # Find winners of this board
             for player in live_players:
-                hand_code = eval_function(player[1] + board_runout)
+                hand_code = eval_function(player[1] + board_runout, caches[board_id])
                 if leading_code is None or hand_code > leading_code:
                     leading_players = [player[0]]
                     leading_code = hand_code
