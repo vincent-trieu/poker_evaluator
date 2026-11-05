@@ -73,7 +73,7 @@ def validate_players_and_boards(
 
     # Check at least two players are live
     live_count = 0
-    for player in PlayersAndBoards.players:
+    for player in players_and_boards.players:
         if player.is_alive:
             live_count += 1
     if live_count < 2:
@@ -101,7 +101,7 @@ def sample_from_deck(
     draws_required: int,
     cards_in_deck: Sequence[int],
     board: Sequence[int, ...] = (),
-) -> tuple[int]:
+) -> tuple[int, ...]:
     """Samples cards from the deck and appends them to the board."""
     if draws_required == 0:
         return board
@@ -113,6 +113,6 @@ def sample_from_deck(
 
     # Micro-optimization: direct sampling for k = 1
     if draws_required == 1:
-        return board + random.choice(cards_in_deck)
+        return board + (random.choice(cards_in_deck),)
     else:
         return tuple(board + rng.sample(cards_in_deck, draws_required))
