@@ -9,6 +9,7 @@ like Badugi, which don't use the standard 5-card hand rankings.
 """
 
 from collections.abc import Iterable
+from heapq import merge
 from itertools import combinations
 
 from poker_evaluator.utils import (
@@ -197,6 +198,21 @@ def ranking_badugi(
 def evaluate_standard(pool: tuple[int, ...]) -> int:
     """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
     subsets = combinations(sorted(pool), 5)
+    return best_of_subsets(subsets, ranking_standard)
+
+
+def evaluate_omaha(
+    first_pool: tuple[int, ...],
+    second_pool: tuple[int, ...] = (),
+    first_count: int = 0,
+    second_count: int = 0,
+) -> int:
+    """
+    Best 5-card hand from two pools but you have to used a fixed number from each pool (e.g. Omaha Hold'em).
+    """
+    first_subsets = combinations(sorted(first_pool), first_count)
+    second_subsets = combinations(sorted(second_pool), second_count)
+    subsets = tuple(tuple(merge(fs, ss)) for fs in first_subsets for ss in second_subsets)
     return best_of_subsets(subsets, ranking_standard)
 
 
