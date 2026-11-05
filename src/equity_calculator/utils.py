@@ -45,14 +45,14 @@ def validate_cards_from_deck(
 
 
 def validate_players_and_boards(
-    players_and_board: PlayersAndBoards,
+    players_and_boards: PlayersAndBoards,
     complete_deck: Sequence[int],
     hole_card_count: int,
     board_count_max: int,
 ) -> None:
     """Checks that the hole cards and board make sense, given the variant and deck used."""
-    hands = tuple(player.hole_cards for player in players_and_board.players)
-    boards = players_and_board.boards
+    hands = tuple(player.hole_cards for player in players_and_boards.players)
+    boards = players_and_boards.boards
 
     # Check each player has the right number of hole cards
     for hand in hands:
@@ -78,7 +78,7 @@ def validate_players_and_boards(
             live_count += 1
     if live_count < 2:
         raise ValueError(
-            f"Fewer than two players are live: {players_and_board.players!r}"
+            f"Fewer than two players are live: {players_and_boards.players!r}"
         )
 
 
