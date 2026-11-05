@@ -113,6 +113,6 @@ def sample_from_deck(
 
     # Micro-optimization: direct sampling for k = 1
     if draws_required == 1:
-        return board + (random.choice(cards_in_deck),)
+        return board + (rng.choice(cards_in_deck),)
     else:
         return tuple(board + rng.sample(cards_in_deck, draws_required))
