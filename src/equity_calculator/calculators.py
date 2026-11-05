@@ -4,8 +4,8 @@ equity_calculator/calculators.py
 Functions that calculate equity for various poker variants.
 """
 
-from collections.abc import Callable, Sequence
-from itertools import chain, permutations
+from collections.abc import Callable, Iterator, Sequence
+from itertools import chain, combinations
 
 from equity_calculator.player_board import PlayersAndBoards
 
@@ -52,24 +52,16 @@ def generic_exhaustive_calculator(
             f"Not enough cards in deck to complete boards. Deck has {len(actual_deck)} cards left; {draws_required_total} draws required."
         )
 
-    potential_deals = permutations(actual_deck, draws_required_total)
-
-    # Calculate all possible runouts given the given configuration
-    potential_runouts: list[tuple[tuple[int, ...], ...]] = []
-    for deal in potential_deals:
-        i = 0
-        runout: list[tuple[int, ...]] = []
-        for board_id, draws_required in enumerate(draws_required_per_board):
-            runout.append(boards[board_id] + deal[i:i + draws_required])
-            i += draws_required
-        potential_runouts.append(tuple(runout))
-
-    # Evaluate every runout and calculate equity for each live player
     player_wins: dict[int, float] = {player[0]: 0.0 for player in live_players}
-    for runout in potential_runouts:
+    # Calculate all possible runouts given the given configuration
+    for deal in potential_deals(actual_deck, draws_required_per_board):
+        runout: tuple[tuple[int, ...], ...] = tuple(
+            boards[board_id] + deal[board_id] for board_id in range(len(boards))
+        )
+        # Evaluate every runout and calculate equity for each live player
         for board_id, board_runout in enumerate(runout):
             eval_function = evaluator_funcs[board_id]
-            leading_players = []
+            leading_players: list[int] = []
             leading_code = None
             # Find winners of this board
             for player in live_players:
@@ -84,4 +76,26 @@ def generic_exhaustive_calculator(
                 player_wins[winner] += 1 / len(leading_players)
 
     # Normalise over possible runouts
-    return {player_id_wins[0]: player_id_wins[1] / len(potential_runouts) for player_id_wins in player_wins.items()}
+    total_wins = sum(player_wins.values())
+    return {
+        player_id_wins[0]: player_id_wins[1] / total_wins
+        for player_id_wins in player_wins.items()
+    }
+
+
+def potential_deals(
+    deck: tuple[int, ...], draws_required_per_board: tuple[int, ...]
+) -> Iterator[tuple[tuple[int, ...], ...]]:
+    """Enumerates what combinations boards can have given the deck and draws needed."""
+    if not draws_required_per_board:
+        yield ()
+        return
+    k, rest_of_draws_required = (
+        draws_required_per_board[0],
+        draws_required_per_board[1:],
+    )
+    for first in combinations(deck, k):
+        used_cards = set(first)
+        remaining_cards = tuple(c for c in deck if c not in used_cards)
+        for tail in potential_deals(remaining_cards, rest_of_draws_required):
+            yield (first,) + tail
