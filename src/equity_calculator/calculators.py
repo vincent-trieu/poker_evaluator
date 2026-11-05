@@ -31,19 +31,18 @@ def generic_exhaustive_calculator(
         )
 
     live_players: list[tuple[int, tuple[int, ...]]] = []
-    dead_cards: list[int] = []
     used_cards: list[int] = list(chain(*boards))
 
+    # Calculate cards still left in deck
     for player in players_and_boards.players:
         used_cards.extend(player.hole_cards)
         if player.is_alive:
             live_players.append((player.id, player.hole_cards))
-        else:
-            dead_cards.extend(player.hole_cards)
     actual_deck: tuple[int, ...] = tuple(
         card for card in complete_deck if card not in used_cards
     )
 
+    # Find number of cards needed to complete every board
     draws_required_per_board: tuple[int, ...] = tuple(
         board_count_max - len(board) for board in boards
     )
@@ -52,6 +51,7 @@ def generic_exhaustive_calculator(
         raise ValueError(
             f"Not enough cards in deck to complete boards. Deck has {len(actual_deck)} cards left; {draws_required_total} draws required."
         )
+
     potential_deals = permutations(actual_deck, draws_required_total)
 
     # Calculate all possible runouts given the given configuration
@@ -69,13 +69,19 @@ def generic_exhaustive_calculator(
     for runout in potential_runouts:
         for board_id, board_runout in enumerate(runout):
             eval_function = evaluator_funcs[board_id]
-            players_best_hand_code: dict[int, int] = {
-                player[0]: eval_function(player[1] + board_runout)
-                for player in live_players
-            }
-            best = max(players_best_hand_code.values())
-            winners = [p[0] for p in players_best_hand_code.items() if p[1] == best]
-            for winner in winners:
-                player_wins[winner] += 1 / len(winners)
+            leading_players = []
+            leading_code = None
+            # Find winners of this board
+            for player in live_players:
+                hand_code = eval_function(player[1] + board_runout)
+                if leading_code is None or hand_code > leading_code:
+                    leading_players = [player[0]]
+                    leading_code = hand_code
+                elif hand_code == leading_code:
+                    leading_players.append(player[0])
+            # Distribute equity to leading players (they must be winners at end of loop)
+            for winner in leading_players:
+                player_wins[winner] += 1 / len(leading_players)
 
+    # Normalise over possible runouts
     return {player_id_wins[0]: player_id_wins[1] / len(potential_runouts) for player_id_wins in player_wins.items()}
