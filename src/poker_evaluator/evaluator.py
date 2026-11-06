@@ -240,9 +240,10 @@ def evaluate_omaha(
     second_pool: tuple[int, ...] = (),
     first_count: int = 0,
     second_count: int = 0,
+    cache: dict[tuple[int, ...], int] | None = None,
 ) -> int:
     return evaluate_generic(
-        (first_pool, second_pool), (first_count, second_count), ranking_standard, {}
+        (first_pool, second_pool), (first_count, second_count), ranking_standard, cache
     )
 
 
