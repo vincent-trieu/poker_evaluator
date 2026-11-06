@@ -241,6 +241,17 @@ def evaluate_standard(
 
 
 def evaluate_omaha(
+    board: tuple[int, ...],
+    hand: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
+    """Finds best hand using Omaha rules. Also works for Greek Hold'em."""
+    return evaluate_generic(
+        (board, hand), (3, 2), ranking_standard, cache
+    )
+
+
+def evaluate_omaha_like(
     first_pool: tuple[int, ...],
     first_count: int,
     second_pool: tuple[int, ...],
