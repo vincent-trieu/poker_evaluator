@@ -8,9 +8,8 @@ This allows a level of flexibility that allows the evaluator to work with games
 like Badugi, which don't use the standard 5-card hand rankings.
 """
 
-from collections.abc import Iterable
-from heapq import merge
-from itertools import combinations
+from collections.abc import Callable, Iterable
+from itertools import combinations, product
 
 from poker_evaluator.utils import (
     best_of_subsets,
@@ -195,10 +194,45 @@ def ranking_badugi(
 # Specific poker variant evaluation functions
 
 
-def evaluate_standard(pool: tuple[int, ...]) -> int:
-    """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
-    subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_standard)
+def evaluate_generic(
+    pools: tuple[tuple[int, ...], ...],
+    counts: tuple[int, ...],
+    ranking_func: Callable[[tuple[int, ...]], int],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
+    if len(pools) == 1:
+        # Avoids the generator/sorted overhead
+        return best_of_subsets(
+            combinations(sorted(pools[0]), counts[0]), ranking_func, cache
+        )
+
+    # Omaha etc.
+    elif len(pools) == 2:
+        first_subsets = combinations(pools[0], counts[0])
+        second_subsets = combinations(pools[1], counts[1])
+        subsets = tuple(
+            tuple(sorted(fs + ss)) for fs in first_subsets for ss in second_subsets
+        )
+        return best_of_subsets(subsets, ranking_func, cache)
+
+    # Unusual variants - very slow
+    pool_subsets = [
+        combinations(sorted(pool), count) for pool, count in zip(pools, counts)
+    ]
+
+    def gen():
+        for s in pool_subsets[0]:
+            for rest in product(*pool_subsets[1:]):
+                yield tuple(sorted(s + sum(rest, ())))
+
+    return best_of_subsets(gen(), ranking_func, cache)
+
+
+def evaluate_standard(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
+    return evaluate_generic((pool,), (5,), ranking_standard, cache)
 
 
 def evaluate_omaha(
@@ -207,28 +241,31 @@ def evaluate_omaha(
     first_count: int = 0,
     second_count: int = 0,
 ) -> int:
-    """
-    Best 5-card hand from two pools but you have to used a fixed number from each pool (e.g. Omaha Hold'em).
-    """
-    first_subsets = combinations(sorted(first_pool), first_count)
-    second_subsets = combinations(sorted(second_pool), second_count)
-    subsets = tuple(tuple(merge(fs, ss)) for fs in first_subsets for ss in second_subsets)
-    return best_of_subsets(subsets, ranking_standard)
+    return evaluate_generic(
+        (first_pool, second_pool), (first_count, second_count), ranking_standard, {}
+    )
 
 
-def evaluate_short_deck(pool: tuple[int, ...]) -> int:
+def evaluate_short_deck(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """Best 5-card hand from an n-card pool (e.g. short deck Texas Hold'em)."""
-    subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_short_deck)
+    return evaluate_generic((pool,), (5,), ranking_short_deck, cache)
 
 
-def evaluate_ace_to_five_low(pool: tuple[int, ...]) -> int:
+def evaluate_ace_to_five_low(
+    pool: tuple[int, ...],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """Best ('worst') 5-card hand from an n-card pool (e.g. Razz)."""
-    subsets = combinations(sorted(pool), 5)
-    return best_of_subsets(subsets, ranking_ace_to_five_low)
+    return evaluate_generic((pool,), (5,), ranking_ace_to_five_low, cache)
 
 
-def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
+def evaluate_badugi(
+    hand: tuple[int, int, int, int],
+    cache: dict[tuple[int, ...], int] | None = None,
+) -> int:
     """
     Badugi evaluation of four cards.
 
@@ -238,7 +275,9 @@ def evaluate_badugi(hand: tuple[int, int, int, int]) -> int:
         subsets = (
             subset for subset in combinations(hand, size) if legal_badugi(subset)
         )
-        code: int | None = best_of_subsets(subsets, ranking_badugi, allow_no_valid_hand=True)
+        code: int | None = best_of_subsets(
+            subsets, ranking_badugi, cache, allow_no_valid_hand=True
+        )
         if code is not None:
             return code
     raise AssertionError(f"no subset is legal in hand {hand!r}")
