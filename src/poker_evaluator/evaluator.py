@@ -200,6 +200,10 @@ def evaluate_generic(
     ranking_func: Callable[[tuple[int, ...]], int],
     cache: dict[tuple[int, ...], int] | None = None,
 ) -> int:
+    """
+    Generic evaluator that can handle poker variants that fix the number of hole cards used,
+    have multiple boards somehow, etc.
+    """
     if len(pools) == 1:
         # Avoids the generator/sorted overhead
         return best_of_subsets(
@@ -232,14 +236,15 @@ def evaluate_standard(
     pool: tuple[int, ...],
     cache: dict[tuple[int, ...], int] | None = None,
 ) -> int:
+    """Best 5-card hand from an n-card pool (e.g. Texas Hold'em)."""
     return evaluate_generic((pool,), (5,), ranking_standard, cache)
 
 
 def evaluate_omaha(
     first_pool: tuple[int, ...],
-    second_pool: tuple[int, ...] = (),
-    first_count: int = 0,
-    second_count: int = 0,
+    first_count: int,
+    second_pool: tuple[int, ...],
+    second_count: int,
     cache: dict[tuple[int, ...], int] | None = None,
 ) -> int:
     return evaluate_generic(
@@ -274,7 +279,7 @@ def evaluate_badugi(
     """
     for size in (4, 3, 2, 1):
         subsets = (
-            subset for subset in combinations(hand, size) if legal_badugi(subset)
+            sorted(subset) for subset in combinations(hand, size) if legal_badugi(subset)
         )
         code: int | None = best_of_subsets(
             subsets, ranking_badugi, cache, allow_no_valid_hand=True
